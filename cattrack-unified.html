@@ -1,0 +1,2301 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CatTrack Pro</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Mono:wght@300;400;500&family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,400;1,9..144,300&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+/* ════════════════════════════════════════════
+   DESIGN TOKENS
+════════════════════════════════════════════ */
+:root {
+  --bg:     #07080f;
+  --s1:     #0c0e1b;
+  --s2:     #111425;
+  --s3:     #171b30;
+  --s4:     #1d2238;
+  --b0:     #1d2238;
+  --b1:     #252c48;
+  --b2:     #2f3960;
+  --b3:     #3a4878;
+  --gold:   #c9a84c;
+  --gold2:  #e8cc72;
+  --gold3:  #6e5520;
+  --gold4:  rgba(201,168,76,.08);
+  --pt:     #a0bcd8;
+  --pd:     #72c0a4;
+  --rh:     #c87878;
+  --ce:     #90a8e0;
+  --grn:    #4cba88;
+  --red:    #e05858;
+  --amb:    #e0a038;
+  --txt:    #e2eafc;
+  --mid:    #7a8eb4;
+  --dim:    #485070;
+  --dimmer: #252c48;
+  --noise:  url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");
+}
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{height:100%;background:var(--bg);color:var(--txt);font-family:'DM Sans',sans-serif;overflow:hidden}
+
+/* ════════════════════════════════════════════
+   SHELL LAYOUT
+════════════════════════════════════════════ */
+.shell{display:grid;grid-template-columns:228px 1fr;height:100vh;overflow:hidden}
+
+/* ════════════════════════════════════════════
+   SIDEBAR
+════════════════════════════════════════════ */
+.sidebar{
+  background:var(--s1);
+  border-right:1px solid var(--b1);
+  display:flex;flex-direction:column;
+  height:100vh;overflow-y:auto;overflow-x:hidden;
+  position:relative;
+}
+.sidebar::before{content:'';position:absolute;inset:0;background:var(--noise);pointer-events:none;z-index:0}
+
+.sb-logo{padding:22px 18px 16px;border-bottom:1px solid var(--b1);position:relative;z-index:1}
+.sb-logo-mark{font-family:'Bebas Neue';font-size:28px;letter-spacing:4px;color:var(--gold);line-height:1}
+.sb-logo-sub{font-family:'DM Mono',monospace;font-size:7.5px;color:var(--dim);letter-spacing:3.5px;text-transform:uppercase;margin-top:2px}
+.sb-logo-ver{font-family:'DM Mono',monospace;font-size:7px;color:var(--dimmer);letter-spacing:2px;margin-top:5px}
+
+/* Nav */
+.sb-section{padding:16px 14px 5px;font-family:'DM Mono',monospace;font-size:7.5px;color:var(--dimmer);letter-spacing:2.5px;text-transform:uppercase;position:relative;z-index:1}
+.sb-nav{padding:3px 8px;position:relative;z-index:1}
+.sb-item{
+  display:flex;align-items:center;gap:9px;
+  padding:9px 10px;border-radius:7px;
+  cursor:pointer;
+  font-family:'DM Mono',monospace;font-size:11px;color:var(--mid);
+  border:1px solid transparent;
+  transition:.15s;
+  user-select:none;
+}
+.sb-item:hover{background:var(--s2);color:var(--txt)}
+.sb-item.active{background:var(--s3);color:var(--gold);border-color:var(--b2)}
+.sb-item.active .si-ic{color:var(--gold)}
+.si-ic{width:18px;text-align:center;font-size:13px;flex-shrink:0}
+.si-badge{margin-left:auto;background:rgba(201,168,76,.15);color:var(--gold);font-family:'DM Mono',monospace;font-size:8px;padding:2px 6px;border-radius:10px}
+.si-new{margin-left:auto;background:rgba(76,186,136,.15);color:var(--grn);font-family:'DM Mono',monospace;font-size:8px;padding:2px 6px;border-radius:10px}
+
+/* Sidebar PGM ticker */
+.sb-pgm{margin-top:auto;border-top:1px solid var(--b1);padding:14px;position:relative;z-index:1}
+.sb-pgm-hd{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
+.sb-pgm-title{font-family:'DM Mono',monospace;font-size:7.5px;color:var(--dim);letter-spacing:2px;text-transform:uppercase}
+.live-pulse{width:6px;height:6px;border-radius:50%;background:var(--grn);animation:pulse 2s infinite}
+@keyframes pulse{0%,100%{opacity:1;box-shadow:0 0 0 0 rgba(76,186,136,.4)}60%{box-shadow:0 0 0 5px rgba(76,186,136,0)}}
+.pgm-ticker-row{display:flex;align-items:baseline;justify-content:space-between;padding:5px 0;border-bottom:1px solid var(--b1)}
+.pgm-ticker-row:last-child{border:none}
+.ptr-sym{font-family:'DM Mono',monospace;font-size:10px;font-weight:500;width:20px}
+.ptr-val{font-family:'DM Mono',monospace;font-size:11px;font-weight:500}
+.ptr-gbp{font-family:'DM Mono',monospace;font-size:8px}
+.ptr-chg{font-family:'DM Mono',monospace;font-size:9px}
+.up{color:var(--grn)}.dn{color:var(--red)}.nt{color:var(--amb)}
+.sb-ts{font-family:'DM Mono',monospace;font-size:8px;color:var(--dimmer);margin-top:8px;text-align:center}
+
+/* ════════════════════════════════════════════
+   MAIN AREA
+════════════════════════════════════════════ */
+.main{display:flex;flex-direction:column;overflow:hidden;position:relative}
+
+/* ── TOPBAR ── */
+.topbar{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:0 24px;height:54px;
+  background:var(--s1);border-bottom:1px solid var(--b1);
+  flex-shrink:0;gap:12px;
+}
+.tb-breadcrumb{display:flex;align-items:center;gap:6px}
+.tb-page{font-family:'Bebas Neue';font-size:20px;letter-spacing:2px;color:var(--txt)}
+.tb-sep{color:var(--dimmer);font-size:14px}
+.tb-sub{font-family:'DM Mono',monospace;font-size:10px;color:var(--dim);letter-spacing:1px}
+.tb-actions{display:flex;gap:7px;align-items:center}
+
+/* ── BUTTONS ── */
+.btn{display:inline-flex;align-items:center;gap:5px;padding:7px 14px;border-radius:6px;border:none;cursor:pointer;font-size:12px;font-family:'DM Sans',sans-serif;font-weight:600;transition:.15s;white-space:nowrap;letter-spacing:.2px}
+.btn-gold{background:var(--gold);color:#07080f}.btn-gold:hover{background:var(--gold2)}
+.btn-s{background:var(--s2);color:var(--mid);border:1px solid var(--b2)}.btn-s:hover{background:var(--s3);color:var(--txt)}
+.btn-ghost{background:transparent;border:1px solid var(--b1);color:var(--dim)}.btn-ghost:hover{border-color:var(--b2);color:var(--mid)}
+.btn-red{background:rgba(224,88,88,.1);color:var(--red);border:1px solid rgba(224,88,88,.2)}.btn-red:hover{background:rgba(224,88,88,.18)}
+.btn-grn{background:rgba(76,186,136,.12);color:var(--grn);border:1px solid rgba(76,186,136,.25)}.btn-grn:hover{background:rgba(76,186,136,.2)}
+.btn-sm{padding:5px 10px;font-size:11px}
+
+/* ── VIEW CONTAINER ── */
+.view-wrap{flex:1;overflow-y:auto;overflow-x:hidden;position:relative}
+.view{display:none;padding:24px;animation:viewIn .2s ease}
+.view.active{display:block}
+@keyframes viewIn{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:translateY(0)}}
+
+/* Scrollbar */
+::-webkit-scrollbar{width:5px;height:5px}
+::-webkit-scrollbar-track{background:var(--s1)}
+::-webkit-scrollbar-thumb{background:var(--b2);border-radius:3px}
+
+/* ════════════════════════════════════════════
+   COMMON COMPONENTS
+════════════════════════════════════════════ */
+/* Grid helpers */
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.g3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px}
+.g4{display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:14px}
+.g5{display:grid;grid-template-columns:repeat(5,1fr);gap:14px}
+.g23{display:grid;grid-template-columns:2fr 1fr;gap:16px}
+.g32{display:grid;grid-template-columns:3fr 2fr;gap:16px}
+.g13{display:grid;grid-template-columns:1fr 3fr;gap:16px}
+.gc3{display:grid;grid-template-columns:repeat(3,1fr);gap:0}
+
+/* Panel */
+.panel{background:var(--s1);border:1px solid var(--b1);border-radius:10px;overflow:hidden;margin-bottom:0}
+.ph{display:flex;align-items:center;justify-content:space-between;padding:12px 16px;border-bottom:1px solid var(--b1)}
+.ph-title{font-family:'DM Mono',monospace;font-size:9px;color:var(--mid);letter-spacing:2px;text-transform:uppercase}
+.ph-note{font-family:'DM Mono',monospace;font-size:9px;color:var(--dim)}
+.pb{padding:16px}
+.pb-sm{padding:12px}
+
+/* KPI card */
+.kpi-card{background:var(--s1);border:1px solid var(--b1);border-radius:10px;padding:16px 18px;position:relative;overflow:hidden}
+.kpi-card::after{content:'';position:absolute;top:0;left:0;right:0;height:2px}
+.kpi-gold::after{background:var(--gold)}
+.kpi-grn::after{background:var(--grn)}
+.kpi-pt::after{background:var(--pt)}
+.kpi-red::after{background:var(--red)}
+.kpi-pd::after{background:var(--pd)}
+.kpi-rh::after{background:var(--rh)}
+.kpi-val{font-family:'Bebas Neue';font-size:34px;letter-spacing:1px;line-height:1.1}
+.kpi-lbl{font-family:'DM Mono',monospace;font-size:8px;color:var(--dim);text-transform:uppercase;letter-spacing:2px;margin-top:5px}
+.kpi-sub{font-family:'DM Mono',monospace;font-size:10px;color:var(--mid);margin-top:3px}
+.kpi-trend{position:absolute;right:16px;top:50%;transform:translateY(-50%);font-family:'DM Mono',monospace;font-size:11px}
+
+/* Tag / badge */
+.tag{display:inline-flex;align-items:center;padding:2px 7px;border-radius:3px;font-family:'DM Mono',monospace;font-size:9px;letter-spacing:.4px}
+.t-cat{background:rgba(201,168,76,.1);color:var(--gold);border:1px solid rgba(201,168,76,.2)}
+.t-dpf{background:rgba(114,192,164,.1);color:var(--pd);border:1px solid rgba(114,192,164,.2)}
+.t-elv{background:rgba(76,186,136,.1);color:var(--grn);border:1px solid rgba(76,186,136,.2)}
+.t-ext{background:rgba(160,188,216,.1);color:var(--pt);border:1px solid rgba(160,188,216,.2)}
+.t-walk{background:rgba(224,160,56,.1);color:var(--amb);border:1px solid rgba(224,160,56,.2)}
+.t-intact{background:rgba(76,186,136,.08);color:var(--grn)}
+.t-cracked{background:rgba(224,160,56,.08);color:var(--amb)}
+.t-gutted{background:rgba(224,88,88,.08);color:var(--red)}
+.t-lot{background:rgba(144,168,224,.1);color:var(--ce)}
+.t-dispatched{background:rgba(76,186,136,.1);color:var(--grn)}
+.t-pending{background:rgba(224,160,56,.1);color:var(--amb)}
+
+/* Form */
+.form-row{display:flex;flex-direction:column;gap:5px;margin-bottom:12px}
+.form-lbl{font-family:'DM Mono',monospace;font-size:8.5px;color:var(--dim);text-transform:uppercase;letter-spacing:1.5px}
+.form-inp,.form-sel,.form-ta{background:var(--s2);border:1px solid var(--b2);border-radius:7px;padding:9px 12px;color:var(--txt);font-size:13px;font-family:'DM Sans',sans-serif;outline:none;width:100%;transition:.15s}
+.form-inp:focus,.form-sel:focus,.form-ta:focus{border-color:var(--gold3);background:var(--s3)}
+.form-sel option{background:var(--s2)}
+.form-ta{resize:vertical;min-height:70px;font-family:'DM Mono',monospace;font-size:11px}
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.full{grid-column:1/-1}
+
+/* Table */
+.tbl{width:100%;border-collapse:collapse}
+.tbl th{font-family:'DM Mono',monospace;font-size:8px;color:var(--dim);letter-spacing:1.5px;text-transform:uppercase;text-align:left;padding:10px 12px;border-bottom:1px solid var(--b1);font-weight:400;white-space:nowrap}
+.tbl td{padding:10px 12px;font-size:12px;color:var(--mid);border-bottom:1px solid var(--b1);vertical-align:middle}
+.tbl tr:last-child td{border-bottom:none}
+.tbl tr:hover td{background:var(--s2);color:var(--txt);cursor:pointer}
+.mono{font-family:'DM Mono',monospace;font-size:11px}
+
+/* Divider */
+.divider{height:1px;background:var(--b1);margin:16px 0}
+
+/* Section heading */
+.sec-hd{font-family:'Bebas Neue';font-size:16px;letter-spacing:2px;color:var(--txt);margin-bottom:14px}
+.sec-sub{font-family:'DM Mono',monospace;font-size:9px;color:var(--dim);letter-spacing:1.5px;text-transform:uppercase;margin-bottom:12px}
+
+/* Progress bar */
+.prog-track{height:6px;background:var(--s3);border-radius:3px;overflow:hidden}
+.prog-fill{height:100%;border-radius:3px;transition:width .8s cubic-bezier(.4,0,.2,1)}
+
+/* Modal overlay */
+.modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.8);backdrop-filter:blur(6px);z-index:500;display:none;align-items:center;justify-content:center}
+.modal-bg.open{display:flex}
+.modal{background:var(--s1);border:1px solid var(--b2);border-radius:14px;width:560px;max-height:90vh;overflow-y:auto;box-shadow:0 40px 80px rgba(0,0,0,.7)}
+.modal-hd{padding:18px 22px;border-bottom:1px solid var(--b1);display:flex;justify-content:space-between;align-items:center;position:sticky;top:0;background:var(--s1);z-index:10}
+.modal-title{font-family:'Bebas Neue';font-size:20px;letter-spacing:2px}
+.modal-close{width:28px;height:28px;border-radius:6px;border:1px solid var(--b1);background:var(--s2);color:var(--mid);cursor:pointer;font-size:14px;display:flex;align-items:center;justify-content:center;transition:.15s}
+.modal-close:hover{color:var(--txt);border-color:var(--b2)}
+.modal-body{padding:22px}
+.modal-foot{padding:14px 22px;border-top:1px solid var(--b1);display:flex;justify-content:flex-end;gap:8px}
+
+/* Toast */
+.toast{position:fixed;bottom:20px;right:20px;background:var(--s2);border:1px solid var(--grn);border-radius:8px;padding:11px 16px;font-family:'DM Mono',monospace;font-size:12px;color:var(--txt);z-index:999;display:none;align-items:center;gap:9px;box-shadow:0 8px 32px rgba(0,0,0,.5);animation:toastIn .3s ease;max-width:380px}
+.toast.show{display:flex}
+@keyframes toastIn{from{transform:translateX(10px);opacity:0}to{transform:translateX(0);opacity:1}}
+
+/* Notification dot */
+.notif-dot{width:7px;height:7px;border-radius:50%;background:var(--gold);position:absolute;top:8px;right:8px;animation:pulse 2s infinite}
+
+/* ════════════════════════════════════════════
+   MINI SPARKLINE (inline SVG)
+════════════════════════════════════════════ */
+.spark{width:60px;height:24px;display:inline-block;vertical-align:middle}
+
+/* ════════════════════════════════════════════
+   INTAKE METHODS
+════════════════════════════════════════════ */
+.intake-methods{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-bottom:20px}
+.im-card{background:var(--s2);border:1px solid var(--b1);border-radius:10px;padding:16px;text-align:center;cursor:pointer;transition:.2s;position:relative}
+.im-card:hover,.im-card.selected{background:var(--s3);border-color:var(--b2)}
+.im-card.selected{border-color:var(--gold3)}
+.im-icon{font-size:28px;margin-bottom:8px}
+.im-title{font-size:13px;font-weight:600;color:var(--txt);margin-bottom:3px}
+.im-sub{font-family:'DM Mono',monospace;font-size:10px;color:var(--dim)}
+
+/* AI scan UI */
+.ai-scan-frame{background:var(--s3);border:2px dashed var(--b2);border-radius:10px;height:200px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;cursor:pointer;transition:.2s;position:relative;overflow:hidden}
+.ai-scan-frame:hover{border-color:var(--gold3)}
+.scan-line{position:absolute;left:0;right:0;height:2px;background:linear-gradient(90deg,transparent,var(--gold),transparent);animation:scanline 2s ease-in-out infinite}
+@keyframes scanline{0%{top:0;opacity:0}20%{opacity:1}80%{opacity:1}100%{top:100%;opacity:0}}
+.scan-result{background:var(--s3);border:1px solid var(--grn);border-radius:8px;padding:12px;display:none}
+
+/* Buy price calc band */
+.buy-calc{background:var(--s3);border:1px solid var(--b2);border-radius:8px;padding:14px;margin-top:12px}
+.bc-row{display:flex;justify-content:space-between;align-items:center;padding:5px 0;border-bottom:1px solid var(--b1);font-size:12px}
+.bc-row:last-child{border-bottom:none}
+.bc-lbl{font-family:'DM Mono',monospace;font-size:10px;color:var(--mid)}
+.bc-val{font-family:'DM Mono',monospace;font-size:11px;font-weight:500}
+.bc-band{display:flex;align-items:baseline;gap:6px;margin-top:8px;padding-top:8px;border-top:1px solid var(--b1)}
+.bc-min{font-family:'Bebas Neue';font-size:30px;color:var(--gold);letter-spacing:1px;line-height:1}
+.bc-sep{font-family:'DM Mono',monospace;font-size:14px;color:var(--dim)}
+.bc-max{font-family:'Bebas Neue';font-size:30px;color:var(--gold2);letter-spacing:1px;line-height:1}
+.bc-unit{font-family:'DM Mono',monospace;font-size:10px;color:var(--dim);align-self:flex-end;padding-bottom:3px}
+
+/* Grade selector */
+.grade-btns{display:flex;gap:6px}
+.grade-btn{flex:1;padding:8px;border-radius:7px;border:1px solid var(--b2);background:var(--s2);cursor:pointer;text-align:center;transition:.15s}
+.grade-btn:hover{border-color:var(--b3)}
+.grade-btn.sel-intact{border-color:rgba(76,186,136,.5);background:rgba(76,186,136,.06)}
+.grade-btn.sel-cracked{border-color:rgba(224,160,56,.5);background:rgba(224,160,56,.06)}
+.grade-btn.sel-gutted{border-color:rgba(224,88,88,.5);background:rgba(224,88,88,.06)}
+.gb-lbl{font-family:'DM Mono',monospace;font-size:9px;color:var(--mid);text-transform:uppercase;letter-spacing:.5px}
+.gb-pct{font-family:'DM Mono',monospace;font-size:10px;margin-top:2px}
+
+/* Source selector */
+.source-btns{display:flex;gap:6px}
+.source-btn{flex:1;padding:8px 6px;border-radius:7px;border:1px solid var(--b2);background:var(--s2);cursor:pointer;text-align:center;transition:.15s;font-family:'DM Mono',monospace;font-size:10px;color:var(--dim)}
+.source-btn:hover{border-color:var(--b3);color:var(--mid)}
+.source-btn.sel-elv{border-color:rgba(76,186,136,.4);color:var(--grn);background:rgba(76,186,136,.06)}
+.source-btn.sel-ext{border-color:rgba(160,188,216,.4);color:var(--pt);background:rgba(160,188,216,.06)}
+.source-btn.sel-walk{border-color:rgba(224,160,56,.4);color:var(--amb);background:rgba(224,160,56,.06)}
+
+/* ════════════════════════════════════════════
+   INVENTORY VIEW
+════════════════════════════════════════════ */
+.inv-filters{display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap;align-items:center}
+.search-wrap{position:relative;flex:1;min-width:200px}
+.search-ic{position:absolute;left:10px;top:50%;transform:translateY(-50%);color:var(--dim);font-size:12px;pointer-events:none}
+.search-inp{background:var(--s2);border:1px solid var(--b2);border-radius:7px;padding:8px 12px 8px 32px;color:var(--txt);font-size:12px;font-family:'DM Sans',sans-serif;outline:none;width:100%;transition:.15s}
+.search-inp:focus{border-color:var(--gold3)}
+.search-inp::placeholder{color:var(--dim)}
+.chip{padding:6px 11px;border-radius:16px;border:1px solid var(--b1);background:var(--s2);color:var(--dim);font-family:'DM Mono',monospace;font-size:9px;cursor:pointer;transition:.15s;letter-spacing:.4px;white-space:nowrap}
+.chip:hover{border-color:var(--b2);color:var(--mid)}
+.chip.on{background:var(--s3);border-color:var(--gold3);color:var(--gold)}
+
+/* Age warning */
+.age-warn{color:var(--amb)}.age-crit{color:var(--red)}
+
+/* ════════════════════════════════════════════
+   LOTS VIEW
+════════════════════════════════════════════ */
+.lot-card{background:var(--s2);border:1px solid var(--b1);border-radius:10px;padding:16px;cursor:pointer;transition:.15s}
+.lot-card:hover{border-color:var(--b2);background:var(--s3)}
+.lot-hd{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:10px}
+.lot-id{font-family:'Bebas Neue';font-size:18px;letter-spacing:2px;color:var(--gold)}
+.lot-meta{font-family:'DM Mono',monospace;font-size:9px;color:var(--dim);margin-top:2px}
+.lot-pgm-row{display:flex;gap:8px;margin:8px 0;flex-wrap:wrap}
+.lot-pgm-chip{font-family:'DM Mono',monospace;font-size:10px;padding:3px 8px;border-radius:4px;background:var(--s3)}
+
+/* ════════════════════════════════════════════
+   SETTLEMENT VIEW
+════════════════════════════════════════════ */
+.settle-row{display:flex;justify-content:space-between;align-items:center;padding:9px 0;border-bottom:1px solid var(--b1);font-size:12px}
+.settle-row:last-child{border-bottom:none}
+.settle-lbl{font-family:'DM Mono',monospace;font-size:10px;color:var(--mid)}
+.settle-val{font-family:'DM Mono',monospace;font-size:11px;font-weight:500}
+.accuracy-gauge{position:relative;width:100%;height:12px;background:var(--s3);border-radius:6px;overflow:hidden;margin:8px 0}
+.ag-fill{height:100%;border-radius:6px;background:linear-gradient(90deg,var(--grn),var(--gold2))}
+
+/* ════════════════════════════════════════════
+   ASSAY DB (inline)
+════════════════════════════════════════════ */
+.pgm-mini{display:flex;flex-direction:column;gap:2px;width:80px}
+.pm-row{display:flex;align-items:center;gap:4px}
+.pm-lbl{font-family:'DM Mono',monospace;font-size:8px;width:14px}
+.pm-track{flex:1;height:3px;background:var(--s3);border-radius:2px;overflow:hidden}
+.pm-fill{height:100%;border-radius:2px}
+.pm-val{font-family:'DM Mono',monospace;font-size:8px;color:var(--dim);width:24px;text-align:right}
+
+/* Import drop zone */
+.drop-zone{border:2px dashed var(--b2);border-radius:12px;padding:32px 24px;text-align:center;cursor:pointer;transition:.2s;background:var(--s2)}
+.drop-zone:hover,.drop-zone.dragover{border-color:var(--gold3);background:var(--s3)}
+.import-preview{max-height:320px;overflow-y:auto;margin-top:14px}
+.import-preview table{width:100%;border-collapse:collapse;font-family:'DM Mono',monospace;font-size:10px}
+.import-preview th{background:var(--s3);color:var(--mid);padding:6px 8px;text-align:left;font-weight:400;font-size:8px;text-transform:uppercase;letter-spacing:1px;position:sticky;top:0}
+.import-preview td{padding:5px 8px;border-bottom:1px solid var(--b1);color:var(--mid)}
+.import-preview tr:hover td{background:var(--s3);color:var(--txt)}
+.import-stats{display:flex;gap:10px;margin-top:12px;flex-wrap:wrap}
+.import-stat{background:var(--s3);border-radius:6px;padding:8px 12px;font-family:'DM Mono',monospace;font-size:11px}
+.col-map-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:12px}
+.col-map-item{display:flex;align-items:center;gap:6px;font-family:'DM Mono',monospace;font-size:10px;padding:4px 0}
+
+/* ════════════════════════════════════════════
+   COMMODITY DESK (inline)
+════════════════════════════════════════════ */
+.metal-card-sm{background:var(--s2);border:1px solid var(--b1);border-radius:9px;padding:14px;position:relative;overflow:hidden}
+.mcs-top{height:2px;position:absolute;top:0;left:0;right:0}
+
+/* Fade animations */
+@keyframes fadeUp{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
+.fade-in{animation:fadeUp .25s ease forwards;opacity:0}
+</style>
+</head>
+<body>
+<div class="shell">
+
+<!-- ════════════════════════════════════════════
+     SIDEBAR
+════════════════════════════════════════════ -->
+<nav class="sidebar">
+  <div class="sb-logo">
+    <div class="sb-logo-mark">CatTrack</div>
+    <div class="sb-logo-sub">Pro · Trading System</div>
+    <div class="sb-logo-ver">v1.0 · All modules connected</div>
+  </div>
+
+  <div class="sb-section">Operations</div>
+  <div class="sb-nav">
+    <div class="sb-item active" onclick="nav('dashboard')">
+      <span class="si-ic">◈</span>Dashboard
+      <span class="si-badge" id="badge-alerts" style="display:none">!</span>
+    </div>
+    <div class="sb-item" onclick="nav('intake')">
+      <span class="si-ic">⊕</span>Unit Intake
+    </div>
+    <div class="sb-item" onclick="nav('inventory')">
+      <span class="si-ic">≡</span>Inventory
+      <span class="si-badge" id="badge-inv" style="display:none"></span>
+    </div>
+    <div class="sb-item" onclick="nav('lots')">
+      <span class="si-ic">⬡</span>Lots & Dispatch
+    </div>
+  </div>
+
+  <div class="sb-section">Trading</div>
+  <div class="sb-nav">
+    <div class="sb-item" onclick="nav('analytics')">
+      <span class="si-ic">◎</span>Analytics
+    </div>
+    <div class="sb-item" onclick="nav('assay')">
+      <span class="si-ic">⬥</span>Assay Database
+    </div>
+    <div class="sb-item" onclick="nav('commodity')">
+      <span class="si-ic">⬦</span>Commodity Desk
+    </div>
+    <div class="sb-item" onclick="nav('settlement')">
+      <span class="si-ic">✦</span>Settlement
+    </div>
+    <div class="sb-item" onclick="nav('suppliers')">
+      <span class="si-ic">⊡</span>Suppliers
+    </div>
+  </div>
+
+  <!-- Live PGM ticker -->
+  <div class="sb-pgm">
+    <div class="sb-pgm-hd">
+      <span class="sb-pgm-title">Live PGM · GBP/troy oz</span>
+      <span class="live-pulse" id="live-dot"></span>
+    </div>
+    <div class="pgm-ticker-row">
+      <span class="ptr-sym" style="color:var(--pt)">Pt</span>
+      <div style="flex:1">
+        <div class="ptr-val" id="sb-pt-usd" style="color:var(--pt)">—</div>
+        <div class="ptr-gbp" style="color:var(--dim)" id="sb-pt-gbp">—</div>
+      </div>
+      <span class="ptr-chg" id="sb-pt-chg">—</span>
+    </div>
+    <div class="pgm-ticker-row">
+      <span class="ptr-sym" style="color:var(--pd)">Pd</span>
+      <div style="flex:1">
+        <div class="ptr-val" id="sb-pd-usd" style="color:var(--pd)">—</div>
+        <div class="ptr-gbp" style="color:var(--dim)" id="sb-pd-gbp">—</div>
+      </div>
+      <span class="ptr-chg" id="sb-pd-chg">—</span>
+    </div>
+    <div class="pgm-ticker-row">
+      <span class="ptr-sym" style="color:var(--rh)">Rh</span>
+      <div style="flex:1">
+        <div class="ptr-val" id="sb-rh-usd" style="color:var(--rh)">—</div>
+        <div class="ptr-gbp" style="color:var(--dim)" id="sb-rh-gbp">—</div>
+      </div>
+      <span class="ptr-chg" id="sb-rh-chg">—</span>
+    </div>
+    <div class="sb-ts" id="sb-ts">Prices loading...</div>
+  </div>
+</nav>
+
+<!-- ════════════════════════════════════════════
+     MAIN
+════════════════════════════════════════════ -->
+<div class="main">
+  <!-- Topbar -->
+  <div class="topbar">
+    <div class="tb-breadcrumb">
+      <span class="tb-page" id="tb-page">Dashboard</span>
+      <span class="tb-sep" id="tb-sep" style="display:none">›</span>
+      <span class="tb-sub" id="tb-sub"></span>
+    </div>
+    <div class="tb-actions" id="tb-actions"></div>
+  </div>
+
+  <!-- View container -->
+  <div class="view-wrap">
+
+    <!-- ── DASHBOARD ── -->
+    <div class="view active" id="view-dashboard"></div>
+
+    <!-- ── INTAKE ── -->
+    <div class="view" id="view-intake"></div>
+
+    <!-- ── INVENTORY ── -->
+    <div class="view" id="view-inventory"></div>
+
+    <!-- ── LOTS ── -->
+    <div class="view" id="view-lots"></div>
+
+    <!-- ── ANALYTICS ── -->
+    <div class="view" id="view-analytics"></div>
+
+    <!-- ── ASSAY DB ── -->
+    <div class="view" id="view-assay"></div>
+
+    <!-- ── COMMODITY ── -->
+    <div class="view" id="view-commodity"></div>
+
+    <!-- ── SETTLEMENT ── -->
+    <div class="view" id="view-settlement"></div>
+
+    <!-- ── SUPPLIERS ── -->
+    <div class="view" id="view-suppliers"></div>
+
+  </div><!-- /view-wrap -->
+</div><!-- /main -->
+</div><!-- /shell -->
+
+<!-- Modals -->
+<div class="modal-bg" id="modal-intake-confirm">
+  <div class="modal" style="width:460px">
+    <div class="modal-hd">
+      <span class="modal-title">Confirm Unit Intake</span>
+      <button class="modal-close" onclick="closeModal('modal-intake-confirm')">✕</button>
+    </div>
+    <div class="modal-body" id="intake-confirm-body"></div>
+    <div class="modal-foot">
+      <button class="btn btn-ghost" onclick="closeModal('modal-intake-confirm')">Cancel</button>
+      <button class="btn btn-gold" onclick="confirmIntake()">✓ Confirm & Add to Inventory</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-bg" id="modal-lot-create">
+  <div class="modal">
+    <div class="modal-hd">
+      <span class="modal-title">Create New Lot</span>
+      <button class="modal-close" onclick="closeModal('modal-lot-create')">✕</button>
+    </div>
+    <div class="modal-body" id="lot-create-body"></div>
+    <div class="modal-foot">
+      <button class="btn btn-ghost" onclick="closeModal('modal-lot-create')">Cancel</button>
+      <button class="btn btn-gold" onclick="confirmLot()">Create Lot</button>
+    </div>
+  </div>
+</div>
+
+<!-- Toast -->
+<div class="toast" id="toast">
+  <span id="toast-ic" style="font-size:15px">✓</span>
+  <span id="toast-msg"></span>
+</div>
+
+<!-- Import Assay Data Modal -->
+<div class="modal-bg" id="modal-import-assay">
+  <div class="modal" style="width:680px">
+    <div class="modal-hd">
+      <span class="modal-title">Import Assay Data</span>
+      <button class="modal-close" onclick="closeModal('modal-import-assay')">&#10005;</button>
+    </div>
+    <div class="modal-body">
+      <div id="import-drop-zone" style="border:2px dashed var(--b2);border-radius:12px;padding:32px 24px;text-align:center;cursor:pointer;background:var(--s2);transition:.2s" onclick="document.getElementById('import-file-input').click()">
+        <input type="file" id="import-file-input" accept=".csv,.tsv,.txt" style="display:none" onchange="handleImportFile(this.files[0])">
+        <div style="font-size:36px;margin-bottom:8px">&#128196;</div>
+        <div style="font-size:14px;font-weight:600;color:var(--txt);margin-bottom:4px">Drop CSV file here or click to browse</div>
+        <div style="font-family:'DM Mono',monospace;font-size:10px;color:var(--dim)">Accepted: .csv, .tsv, .txt</div>
+        <div style="margin-top:14px;font-family:'DM Mono',monospace;font-size:9px;color:var(--dim);text-align:left;background:var(--s3);border-radius:6px;padding:10px 14px;line-height:1.7">
+          <strong style="color:var(--mid)">Expected columns (header row required):</strong><br>
+          <span style="color:var(--grn)">Part_Number</span>, <span style="color:var(--grn)">Vehicle</span>, <span style="color:var(--grn)">Type</span> (required)<br>
+          Make, Fuel, Euro, Pt_g, Pd_g, Rh_g, Ce_kg, Weight_kg, Confidence, Notes (optional)<br>
+          <span style="color:var(--dim)">Column names are flexible &mdash; case-insensitive, underscores optional.</span>
+        </div>
+      </div>
+      <div id="import-preview-area" style="display:none">
+        <div id="import-col-map"></div>
+        <div id="import-stats"></div>
+        <div id="import-preview-table" class="import-preview"></div>
+        <div style="margin-top:12px"><label style="font-family:'DM Mono',monospace;font-size:10px;color:var(--dim);display:flex;align-items:center;gap:6px"><input type="checkbox" id="import-overwrite" style="accent-color:var(--gold)"> Overwrite existing parts with same Part Number</label></div>
+      </div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn btn-ghost" onclick="closeModal('modal-import-assay');resetImport()">Cancel</button>
+      <button class="btn btn-gold" id="btn-do-import" style="display:none" onclick="executeImport()">Import Parts</button>
+    </div>
+  </div>
+</div>
+
+<!-- Add Part Modal -->
+<div class="modal-bg" id="modal-add-part">
+  <div class="modal" style="width:560px">
+    <div class="modal-hd">
+      <span class="modal-title">Add Assay Part</span>
+      <button class="modal-close" onclick="closeModal('modal-add-part')">&#10005;</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-grid">
+        <div class="form-row"><label class="form-lbl">Part Number *</label><input class="form-inp" id="ap-part" placeholder="e.g. 2E0-K3480"></div>
+        <div class="form-row"><label class="form-lbl">Type *</label><select class="form-sel" id="ap-type"><option value="CAT">CAT</option><option value="DPF">DPF</option></select></div>
+        <div class="form-row full"><label class="form-lbl">Vehicle *</label><input class="form-inp" id="ap-vehicle" placeholder="e.g. BMW 3 Series E90 320d"></div>
+        <div class="form-row"><label class="form-lbl">Make</label><select class="form-sel" id="ap-make"><option value="">--</option><option>BMW</option><option>Volkswagen</option><option>Audi</option><option>Mercedes-Benz</option><option>Ford</option><option>Vauxhall</option><option>Peugeot</option><option>Citroen</option><option>Renault</option><option>Toyota</option><option>Honda</option><option>Nissan</option><option>Jaguar</option><option>Land Rover</option><option>Volvo</option><option>Other</option></select></div>
+        <div class="form-row"><label class="form-lbl">Fuel</label><select class="form-sel" id="ap-fuel"><option value="">--</option><option value="diesel">Diesel</option><option value="petrol">Petrol</option><option value="hybrid">Hybrid</option></select></div>
+        <div class="form-row"><label class="form-lbl">Pt (g)</label><input class="form-inp" id="ap-pt" type="number" step="0.01" value="0" min="0"></div>
+        <div class="form-row"><label class="form-lbl">Pd (g)</label><input class="form-inp" id="ap-pd" type="number" step="0.01" value="0" min="0"></div>
+        <div class="form-row"><label class="form-lbl">Rh (g)</label><input class="form-inp" id="ap-rh" type="number" step="0.001" value="0" min="0"></div>
+        <div class="form-row"><label class="form-lbl">Ce (kg)</label><input class="form-inp" id="ap-ce" type="number" step="0.1" value="0" min="0"></div>
+        <div class="form-row"><label class="form-lbl">Weight (kg)</label><input class="form-inp" id="ap-weight" type="number" step="0.1" value="0" min="0"></div>
+        <div class="form-row"><label class="form-lbl">Confidence</label><select class="form-sel" id="ap-conf"><option value="med">Medium</option><option value="high">High</option><option value="low">Low</option></select></div>
+        <div class="form-row full"><label class="form-lbl">Notes / Stamps</label><input class="form-inp" id="ap-notes" placeholder="Stamps: XXX, YYY. Notes..."></div>
+      </div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn btn-ghost" onclick="closeModal('modal-add-part')">Cancel</button>
+      <button class="btn btn-gold" onclick="saveNewAssayPart()">Add to Database</button>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ════════════════════════════════════════════
+   GLOBAL STATE — single source of truth
+════════════════════════════════════════════ */
+const STATE = {
+  // Live PGM prices (USD/troy oz + GBP/USD FX)
+  prices: {
+    pt:  { usd: 968.40,  prev: 956.90,  gbpPerG: 0 },
+    pd:  { usd: 1042.60, prev: 1050.90, gbpPerG: 0 },
+    rh:  { usd: 4850.00, prev: 4835.00, gbpPerG: 0 },
+    ce:  { usd: 2.14,    prev: 2.13,    gbpPerKg: 0 },
+    fx:  1.2700,  // GBP/USD
+  },
+
+  // Recovery rates (set by user)
+  recovery: { pt: 0.96, pd: 0.98, rh: 0.95 },
+  buyBand:  { min: 0.70, max: 0.80 },
+  refinerFee: 3.50,
+
+  // Inventory — units in stock
+  inventory: [
+    { id:'U-0001', part:'2E0-K3480', vehicle:'BMW 320d E90',   type:'CAT', source:'ELV',      grade:'intact',  bought:42,  pt_g:0.80,pd_g:0.60,rh_g:0.100,ce_kg:0, weight:1.4,daysIn:4,  lot:null, notes:'' },
+    { id:'U-0002', part:'7L6-254401',vehicle:'Audi Q7 3.0 TDI',type:'CAT', source:'External', grade:'intact',  bought:78,  pt_g:1.40,pd_g:1.00,rh_g:0.180,ce_kg:0, weight:2.8,daysIn:8,  lot:null, notes:'' },
+    { id:'U-0003', part:'1K0-254700', vehicle:'VW Golf MK6 TDI',type:'DPF', source:'ELV',     grade:'intact',  bought:18,  pt_g:0,   pd_g:0,   rh_g:0,    ce_kg:1.4,weight:2.1,daysIn:12, lot:null, notes:'' },
+    { id:'U-0004', part:'2254700-07', vehicle:'Mercedes C220d', type:'CAT', source:'Walk-in',  grade:'cracked', bought:28,  pt_g:1.00,pd_g:0.90,rh_g:0.160,ce_kg:0, weight:1.8,daysIn:3,  lot:null, notes:'' },
+    { id:'U-0005', part:'LR010711',   vehicle:'Land Rover Disco 4',type:'CAT',source:'External',grade:'intact', bought:90,  pt_g:1.60,pd_g:1.10,rh_g:0.200,ce_kg:0, weight:3.1,daysIn:18, lot:null, notes:'' },
+    { id:'U-0006', part:'18307805496',vehicle:'BMW X5 E70',     type:'DPF', source:'ELV',      grade:'intact',  bought:22,  pt_g:0,   pd_g:0,   rh_g:0,    ce_kg:1.8,weight:3.2,daysIn:6,  lot:null, notes:'' },
+    { id:'U-0007', part:'3C0-131703', vehicle:'VW Passat B6',   type:'CAT', source:'ELV',      grade:'intact',  bought:38,  pt_g:0.90,pd_g:0.70,rh_g:0.120,ce_kg:0, weight:1.6,daysIn:22, lot:'LOT-009', notes:'' },
+    { id:'U-0008', part:'C2Z17349',   vehicle:'Jaguar XF 3.0d', type:'CAT', source:'External', grade:'intact',  bought:82,  pt_g:1.45,pd_g:1.05,rh_g:0.185,ce_kg:0, weight:2.7,daysIn:9,  lot:null, notes:'' },
+    { id:'U-0009', part:'1766AH',     vehicle:'Peugeot 308 HDi',type:'DPF', source:'ELV',      grade:'cracked', bought:8,   pt_g:0,   pd_g:0,   rh_g:0,    ce_kg:0.9,weight:1.5,daysIn:31, lot:null, notes:'Cracked housing' },
+    { id:'U-0010', part:'2E0-K3490',  vehicle:'BMW 330d E90',   type:'CAT', source:'ELV',      grade:'intact',  bought:54,  pt_g:1.10,pd_g:0.80,rh_g:0.140,ce_kg:0, weight:1.7,daysIn:5,  lot:null, notes:'' },
+    { id:'U-0011', part:'8K0-131701', vehicle:'Audi A4 B8 TDI', type:'CAT', source:'ELV',      grade:'intact',  bought:48,  pt_g:0.95,pd_g:0.72,rh_g:0.130,ce_kg:0, weight:1.7,daysIn:14, lot:'LOT-009', notes:'' },
+    { id:'U-0012', part:'DT1Z-5E212-E',vehicle:'Ford Transit EcoBlue',type:'DPF',source:'External',grade:'intact',bought:24,pt_g:0,pd_g:0,rh_g:0,ce_kg:1.6,weight:2.4,daysIn:7,lot:null,notes:'' },
+  ],
+
+  // Lots
+  lots: [
+    { id:'LOT-009', refiner:'Johnson Matthey', created:'12 Feb 25', dispatched:null, status:'building', unitIds:['U-0007','U-0011'], estValue:0, settledValue:null, notes:'Building — target 40 units' },
+    { id:'LOT-008', refiner:'Umicore',          created:'10 Jan 25', dispatched:'28 Jan 25', status:'dispatched', unitIds:[], estValue:4820, settledValue:null, notes:'Awaiting assay results' },
+    { id:'LOT-007', refiner:'Johnson Matthey',  created:'02 Dec 24', dispatched:'18 Dec 24', status:'settled',    unitIds:[], estValue:5240, settledValue:5188, notes:'Settled. Accuracy 99.0%' },
+    { id:'LOT-006', refiner:'Umicore',           created:'05 Nov 24', dispatched:'22 Nov 24', status:'settled',    unitIds:[], estValue:4910, settledValue:4876, notes:'Settled. Accuracy 99.3%' },
+  ],
+
+  // Suppliers
+  suppliers: [
+    { id:'S-001', name:'AutoRecycle Leeds',    type:'ELV Yard',    units:142, avgBought:44.20, lastDate:'06 Mar 25', active:true },
+    { id:'S-002', name:'Northern Breakers',    type:'ELV Yard',    units:98,  avgBought:41.80, lastDate:'04 Mar 25', active:true },
+    { id:'S-003', name:'Walk-in Trade',        type:'Walk-in',     units:67,  avgBought:32.10, lastDate:'07 Mar 25', active:true },
+    { id:'S-004', name:'Premium Salvage Co.',  type:'External',    units:54,  avgBought:71.40, lastDate:'03 Mar 25', active:true },
+    { id:'S-005', name:'Midlands Auto Parts',  type:'External',    units:38,  avgBought:68.90, lastDate:'28 Feb 25', active:false },
+  ],
+
+  // Assay DB
+  assayDB: [
+    { id:1,  part:'2E0-K3480',   vehicle:'BMW 3 Series E90 320d',     make:'BMW',          type:'CAT',pt_g:0.80,pd_g:0.60,rh_g:0.100,ce_kg:0,   weight:1.4,conf:'med',notes:'Stamps: 2E0K, P3A4' },
+    { id:2,  part:'7L6-254401',  vehicle:'Audi Q7 3.0 TDI',           make:'Audi',         type:'CAT',pt_g:1.40,pd_g:1.00,rh_g:0.180,ce_kg:0,   weight:2.8,conf:'high',notes:'HIGH VALUE. Stamps: 7L6, Q7-D' },
+    { id:3,  part:'1K0-254700',  vehicle:'VW Golf MK5/6 2.0 TDI',     make:'Volkswagen',   type:'DPF',pt_g:0,   pd_g:0,   rh_g:0,    ce_kg:1.4, weight:2.1,conf:'high',notes:'Stamps: 1K0, 254700' },
+    { id:4,  part:'2254700-07',  vehicle:'Mercedes C220d W205',        make:'Mercedes-Benz',type:'CAT',pt_g:1.00,pd_g:0.90,rh_g:0.160,ce_kg:0,   weight:1.8,conf:'med',notes:'Stamps: 2254700, W205' },
+    { id:5,  part:'LR010711',    vehicle:'Land Rover Discovery 4 3.0', make:'Land Rover',   type:'CAT',pt_g:1.60,pd_g:1.10,rh_g:0.200,ce_kg:0,   weight:3.1,conf:'low',notes:'HIGH VALUE. Stamps: LR010, TDV6' },
+    { id:6,  part:'18307805496', vehicle:'BMW X5 E70 3.0d',            make:'BMW',          type:'DPF',pt_g:0,   pd_g:0,   rh_g:0,    ce_kg:1.8, weight:3.2,conf:'med',notes:'Stamps: 7805496' },
+    { id:7,  part:'3C0-131703',  vehicle:'VW Passat B6 2.0 TDI',       make:'Volkswagen',   type:'CAT',pt_g:0.90,pd_g:0.70,rh_g:0.120,ce_kg:0,   weight:1.6,conf:'med',notes:'Very common. Stamps: 3C0' },
+    { id:8,  part:'C2Z17349',    vehicle:'Jaguar XF 3.0d',             make:'Jaguar',       type:'CAT',pt_g:1.45,pd_g:1.05,rh_g:0.185,ce_kg:0,   weight:2.7,conf:'low',notes:'Stamps: C2Z, XF-D' },
+    { id:9,  part:'1766AH',      vehicle:'Peugeot 308 / C4 1.6 HDi',   make:'Peugeot',      type:'DPF',pt_g:0,   pd_g:0,   rh_g:0,    ce_kg:0.9, weight:1.5,conf:'high',notes:'Very high volume. Stamps: 1766AH, FAP' },
+    { id:10, part:'2E0-K3490',   vehicle:'BMW 3 Series E90 330d',      make:'BMW',          type:'CAT',pt_g:1.10,pd_g:0.80,rh_g:0.140,ce_kg:0,   weight:1.7,conf:'med',notes:'Stamps: 2E0K, P3A8' },
+    { id:11, part:'8K0-131701',  vehicle:'Audi A4 B8 2.0 TDI',         make:'Audi',         type:'CAT',pt_g:0.95,pd_g:0.72,rh_g:0.130,ce_kg:0,   weight:1.7,conf:'med',notes:'Stamps: 8K0, A4-TDI' },
+    { id:12, part:'DT1Z-5E212-E',vehicle:'Ford Transit 2.0 EcoBlue',   make:'Ford',         type:'DPF',pt_g:0,   pd_g:0,   rh_g:0,    ce_kg:1.6, weight:2.4,conf:'med',notes:'Stamps: DT1Z, ECOB' },
+  ],
+
+  // Current intake form state
+  intake: { method:'lookup', part:null, source:'ELV', grade:'intact', buyPrice:null, vehicle:'', type:'CAT', notes:'' },
+
+  // UI state
+  ui: { currentView:'dashboard', invFilter:'all', invSearch:'', assayFilter:'all', assaySearch:'' },
+
+  // API config
+  api: { key: localStorage.getItem('ct_key')||'', provider:'metals-api', live:false, interval: parseInt(localStorage.getItem('ct_interval'))||60, lastUpdate:null, timerId:null },
+
+  nextUnitId: 13,
+};
+
+/* Assay DB Persistence */
+const ASSAY_STORAGE_KEY = 'cattrack_assayDB_v1';
+function saveAssayDB() {
+  try { localStorage.setItem(ASSAY_STORAGE_KEY, JSON.stringify(STATE.assayDB)); } catch(e) {}
+}
+function loadAssayDB() {
+  try {
+    var s = localStorage.getItem(ASSAY_STORAGE_KEY);
+    if (s) { var p = JSON.parse(s); if (Array.isArray(p) && p.length) { STATE.assayDB = p; return true; } }
+  } catch(e) {}
+  return false;
+}
+if (loadAssayDB()) console.log('AssayDB loaded:', STATE.assayDB.length, 'parts');
+
+/* ════════════════════════════════════════════
+   PRICE ENGINE
+════════════════════════════════════════════ */
+const TROY = 31.1035;
+function recalcPricesGBP() {
+  const fx = STATE.prices.fx;
+  STATE.prices.pt.gbpPerG  = STATE.prices.pt.usd / TROY / fx;
+  STATE.prices.pd.gbpPerG  = STATE.prices.pd.usd / TROY / fx;
+  STATE.prices.rh.gbpPerG  = STATE.prices.rh.usd / TROY / fx;
+  STATE.prices.ce.gbpPerKg = STATE.prices.ce.usd / fx;
+}
+recalcPricesGBP();
+
+/* Price cache — persist last fetched prices in localStorage */
+const PRICE_CACHE_KEY = 'ct_prices_cache';
+function cachePrices() {
+  try {
+    localStorage.setItem(PRICE_CACHE_KEY, JSON.stringify({
+      pt: STATE.prices.pt.usd, pd: STATE.prices.pd.usd,
+      rh: STATE.prices.rh.usd, ce: STATE.prices.ce.usd,
+      fx: STATE.prices.fx, ts: Date.now()
+    }));
+  } catch(e) {}
+}
+function loadCachedPrices() {
+  try {
+    const c = JSON.parse(localStorage.getItem(PRICE_CACHE_KEY));
+    if (!c || !c.ts) return false;
+    // Only use if less than 24h old
+    if (Date.now() - c.ts > 86400000) return false;
+    STATE.prices.pt.prev = STATE.prices.pt.usd; STATE.prices.pt.usd = c.pt;
+    STATE.prices.pd.prev = STATE.prices.pd.usd; STATE.prices.pd.usd = c.pd;
+    STATE.prices.rh.prev = STATE.prices.rh.usd; STATE.prices.rh.usd = c.rh;
+    if (c.ce) STATE.prices.ce.usd = c.ce;
+    if (c.fx) STATE.prices.fx = c.fx;
+    STATE.api.lastUpdate = new Date(c.ts);
+    recalcPricesGBP();
+    return true;
+  } catch(e) { return false; }
+}
+if (loadCachedPrices()) console.log('Prices loaded from cache');
+
+function calcNetRecovery
+(unit) {
+  const p = STATE.prices;
+  const r = STATE.recovery;
+  const ptVal = unit.pt_g * p.pt.gbpPerG * r.pt;
+  const pdVal = unit.pd_g * p.pd.gbpPerG * r.pd;
+  const rhVal = unit.rh_g * p.rh.gbpPerG * r.rh;
+  const ceVal = unit.ce_kg * p.ce.gbpPerKg;
+  const gross = ptVal + pdVal + rhVal + ceVal;
+  return Math.max(gross - STATE.refinerFee, 0);
+}
+
+function calcBuyBand(net) {
+  return {
+    min: Math.round(net * STATE.buyBand.min),
+    max: Math.round(net * STATE.buyBand.max),
+  };
+}
+
+function gradeMultiplier(grade) {
+  return grade === 'intact' ? 1 : grade === 'cracked' ? 0.65 : 0.18;
+}
+
+function chgPct(now, prev) { return ((now - prev) / prev) * 100; }
+function fmt(n, dp=2) { return n.toFixed(dp); }
+function fmtGBP(n, dp=0) { return '£' + Math.round(n).toLocaleString(); }
+function fmtUSD(n) { return '$' + Math.round(n).toLocaleString(); }
+function pctStr(n) { return (n >= 0 ? '+' : '') + n.toFixed(1) + '%'; }
+
+/* ════════════════════════════════════════════
+   SIDEBAR TICKER
+════════════════════════════════════════════ */
+function updateSidebarTicker() {
+  recalcPricesGBP();
+  const metals = ['pt','pd','rh'];
+  metals.forEach(m => {
+    const p = STATE.prices[m];
+    const chg = chgPct(p.usd, p.prev);
+    const cls = chg >= 0 ? 'up' : 'dn';
+    const sign = chg >= 0 ? '▲' : '▼';
+    document.getElementById('sb-'+m+'-usd').textContent = fmtUSD(p.usd);
+    document.getElementById('sb-'+m+'-gbp').textContent = '≈ £' + (p.usd / STATE.prices.fx).toFixed(0) + '/oz';
+    const chgEl = document.getElementById('sb-'+m+'-chg');
+    chgEl.textContent = sign + ' ' + Math.abs(chg).toFixed(1) + '%';
+    chgEl.className = 'ptr-chg ' + cls;
+  });
+  const now = new Date();
+  document.getElementById('sb-ts').textContent = 'As of ' + now.toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'}) + ' · ' + (STATE.api.live ? 'Live' : 'Demo');
+}
+
+/* ════════════════════════════════════════════
+   NAVIGATION
+════════════════════════════════════════════ */
+const VIEW_META = {
+  dashboard:  { label:'Dashboard',      sub:'Executive Summary',         actions: [] },
+  intake:     { label:'Unit Intake',    sub:'Add New Unit',     actions: [] },
+  inventory:  { label:'Inventory',      sub:'Stock Management', actions: ['btn-create-lot'] },
+  lots:       { label:'Lots & Dispatch',sub:'Refiner Pipeline', actions: ['btn-new-lot'] },
+  analytics:  { label:'Analytics',      sub:'KPI Dashboard',    actions: [] },
+  assay:      { label:'Assay Database', sub:'Part Reference',   actions: ['btn-add-part'] },
+  commodity:  { label:'Commodity Desk', sub:'Live PGM Feed',    actions: [] },
+  settlement: { label:'Settlement',     sub:'Refiner Returns',  actions: [] },
+  suppliers:  { label:'Suppliers',      sub:'CRM',              actions: [] },
+};
+
+function nav(viewId) {
+  STATE.ui.currentView = viewId;
+  // Hide all views
+  document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+  document.getElementById('view-' + viewId).classList.add('active');
+  // Update nav highlight
+  document.querySelectorAll('.sb-item').forEach(i => i.classList.remove('active'));
+  document.querySelectorAll('.sb-item').forEach(i => {
+    if (i.getAttribute('onclick') && i.getAttribute('onclick').includes("'" + viewId + "'")) i.classList.add('active');
+  });
+  // Update topbar
+  const meta = VIEW_META[viewId];
+  document.getElementById('tb-page').textContent = meta.label;
+  document.getElementById('tb-sub').textContent = meta.sub;
+  document.getElementById('tb-sep').style.display = 'inline';
+  // Render view
+  renderView(viewId);
+}
+
+function renderView(id) {
+  const el = document.getElementById('view-' + id);
+  switch(id) {
+    case 'dashboard':  el.innerHTML = renderDashboard(); break;
+    case 'intake':     el.innerHTML = renderIntake(); attachIntakeListeners(); break;
+    case 'inventory':  el.innerHTML = renderInventory(); break;
+    case 'lots':       el.innerHTML = renderLots(); break;
+    case 'analytics':  el.innerHTML = renderAnalytics(); break;
+    case 'assay':      el.innerHTML = renderAssay(); break;
+    case 'commodity':  el.innerHTML = renderCommodity(); break;
+    case 'settlement': el.innerHTML = renderSettlement(); break;
+    case 'suppliers':  el.innerHTML = renderSuppliers(); break;
+  }
+}
+
+/* ════════════════════════════════════════════
+   DASHBOARD
+════════════════════════════════════════════ */
+/* ---- DASHBOARD: EXECUTIVE SUMMARY ---- */
+function renderDashboard() {
+  var inv = STATE.inventory;
+
+  // --- Aggregates ---
+  var totalValue = 0, totalCost = 0;
+  inv.forEach(function(u) {
+    totalValue += calcNetRecovery(u) * gradeMultiplier(u.grade);
+    totalCost += u.bought;
+  });
+  var grossMargin = totalValue - totalCost;
+  var marginPct = totalValue > 0 ? (grossMargin / totalValue * 100) : 0;
+
+  // Settlement accuracy
+  var settled = STATE.lots.filter(function(l){ return l.settledValue; });
+  var avgAcc = settled.length
+    ? settled.reduce(function(s,l){ return s + (l.settledValue / l.estValue * 100); }, 0) / settled.length
+    : 0;
+
+  // --- Channel split ---
+  function channelData(units, label) {
+    var val = 0, cost = 0;
+    units.forEach(function(u) {
+      val += calcNetRecovery(u) * gradeMultiplier(u.grade);
+      cost += u.bought;
+    });
+    var cats = units.filter(function(u){ return u.type === 'CAT'; });
+    var dpfs = units.filter(function(u){ return u.type === 'DPF'; });
+
+    // Top 5 by margin
+    var ranked = units.map(function(u) {
+      var rv = calcNetRecovery(u) * gradeMultiplier(u.grade);
+      return { vehicle: u.vehicle, part: u.part, type: u.type, cost: u.bought, recovery: rv, margin: rv - u.bought };
+    }).sort(function(a,b){ return b.margin - a.margin; }).slice(0, 5);
+
+    return { label:label, units:units.length, value:val, cost:cost, margin:val-cost,
+             marginPct: val>0 ? ((val-cost)/val*100) : 0,
+             cats:cats.length, dpfs:dpfs.length, top5:ranked };
+  }
+
+  var elv = channelData(inv.filter(function(u){ return u.source==='ELV' || u.source==='Walk-in'; }), 'ELV & Walk-in');
+  var ext = channelData(inv.filter(function(u){ return u.source==='External'; }), 'External Suppliers');
+
+  // --- Lot pipeline ---
+  var building = STATE.lots.filter(function(l){ return l.status==='building'; });
+  var dispatched = STATE.lots.filter(function(l){ return l.status==='dispatched'; });
+  var pipelineValue = building.concat(dispatched).reduce(function(s,l){ return s + (l.estValue||0); }, 0);
+  // Recalc building lot values from units
+  building.forEach(function(lot) {
+    var lotUnits = inv.filter(function(u){ return u.lot === lot.id; });
+    if (lotUnits.length) pipelineValue += lotUnits.reduce(function(s,u){ return s + calcNetRecovery(u)*gradeMultiplier(u.grade); }, 0);
+  });
+  var settledTotal = settled.reduce(function(s,l){ return s + l.settledValue; }, 0);
+
+  // --- Top parts by volume ---
+  var partCounts = {};
+  inv.forEach(function(u) {
+    var key = u.part;
+    if (!partCounts[key]) partCounts[key] = { part:u.part, vehicle:u.vehicle, type:u.type, count:0, totalMargin:0 };
+    partCounts[key].count++;
+    partCounts[key].totalMargin += (calcNetRecovery(u)*gradeMultiplier(u.grade)) - u.bought;
+  });
+  var topParts = Object.keys(partCounts).map(function(k){ return partCounts[k]; })
+    .sort(function(a,b){ return b.count - a.count; }).slice(0, 5);
+
+  // --- Build channel panel HTML ---
+  function channelPanel(ch, accent, tagClass) {
+    var rows = ch.top5.map(function(r) {
+      return '<tr>'
+        +'<td style="color:var(--txt);font-size:12px;max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+r.vehicle+'</td>'
+        +'<td class="mono" style="color:var(--gold)">'+r.part+'</td>'
+        +'<td class="mono">\u00a3'+r.cost+'</td>'
+        +'<td class="mono" style="color:var(--grn)">'+fmtGBP(r.recovery)+'</td>'
+        +'<td class="mono" style="color:'+(r.margin>=0?'var(--grn)':'var(--red)')+'">'+fmtGBP(r.margin)+'</td>'
+        +'</tr>';
+    }).join('');
+
+    return '<div class="panel fade-in">'
+      +'<div class="ph"><span class="ph-title">'+ch.label+'</span>'
+      +'<span class="ph-note">'+ch.units+' units</span></div>'
+      +'<div class="pb">'
+
+        // Mini KPI row
+        +'<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:16px">'
+          +'<div style="background:var(--s2);border-radius:8px;padding:12px;text-align:center">'
+            +'<div style="font-family:\'Bebas Neue\';font-size:26px;color:var(--grn);line-height:1">'+fmtGBP(ch.value)+'</div>'
+            +'<div style="font-family:\'DM Mono\',monospace;font-size:8px;color:var(--dim);text-transform:uppercase;letter-spacing:1px;margin-top:4px">Recovery Value</div>'
+          +'</div>'
+          +'<div style="background:var(--s2);border-radius:8px;padding:12px;text-align:center">'
+            +'<div style="font-family:\'Bebas Neue\';font-size:26px;color:var(--pt);line-height:1">'+fmtGBP(ch.cost)+'</div>'
+            +'<div style="font-family:\'DM Mono\',monospace;font-size:8px;color:var(--dim);text-transform:uppercase;letter-spacing:1px;margin-top:4px">Total Cost</div>'
+          +'</div>'
+          +'<div style="background:var(--s2);border-radius:8px;padding:12px;text-align:center">'
+            +'<div style="font-family:\'Bebas Neue\';font-size:26px;color:'+(ch.margin>=0?'var(--gold)':'var(--red)')+';line-height:1">'+fmtGBP(ch.margin)+'</div>'
+            +'<div style="font-family:\'DM Mono\',monospace;font-size:8px;color:var(--dim);text-transform:uppercase;letter-spacing:1px;margin-top:4px">Gross Margin ('+fmt(ch.marginPct,1)+'%)</div>'
+          +'</div>'
+        +'</div>'
+
+        // Type badges
+        +'<div style="display:flex;gap:12px;margin-bottom:14px;align-items:center">'
+          +'<span class="tag t-cat" style="font-size:10px;padding:3px 10px">'+ch.cats+' CAT</span>'
+          +'<span class="tag t-dpf" style="font-size:10px;padding:3px 10px">'+ch.dpfs+' DPF</span>'
+          +'<div style="flex:1"></div>'
+          +'<span style="font-family:\'DM Mono\',monospace;font-size:9px;color:var(--dim)">\u00a3'+Math.round(ch.cost / Math.max(ch.units,1))+' avg cost/unit</span>'
+        +'</div>'
+
+        // Top 5 by profit
+        +'<div style="font-family:\'DM Mono\',monospace;font-size:8px;color:var(--dim);text-transform:uppercase;letter-spacing:1.5px;margin-bottom:6px">Top by Margin</div>'
+        +'<table class="tbl"><thead><tr><th>Vehicle</th><th>Part</th><th>Cost</th><th>Recovery</th><th>Margin</th></tr></thead>'
+        +'<tbody>'+rows+'</tbody></table>'
+      +'</div></div>';
+  }
+
+  // --- Assemble ---
+  return '<div style="display:flex;flex-direction:column;gap:16px">'
+
+    // ROW 1: Hero KPIs
+    +'<div class="g4">'
+      +'<div class="kpi-card kpi-grn fade-in" style="animation-delay:.00s">'
+        +'<div class="kpi-val" style="color:var(--grn)">'+fmtGBP(totalValue)+'</div>'
+        +'<div class="kpi-lbl">Est. Recovery Value</div>'
+        +'<div class="kpi-sub">At today\u2019s PGM spot</div>'
+      +'</div>'
+      +'<div class="kpi-card kpi-pt fade-in" style="animation-delay:.05s">'
+        +'<div class="kpi-val" style="color:var(--pt)">'+fmtGBP(totalCost)+'</div>'
+        +'<div class="kpi-lbl">Total Buy Cost</div>'
+        +'<div class="kpi-sub">'+inv.length+' units in stock</div>'
+      +'</div>'
+      +'<div class="kpi-card kpi-gold fade-in" style="animation-delay:.10s">'
+        +'<div class="kpi-val" style="color:var(--gold);font-size:40px">'+fmtGBP(grossMargin)+'</div>'
+        +'<div class="kpi-lbl">Gross Margin</div>'
+        +'<div class="kpi-sub" style="color:'+(grossMargin>=0?'var(--grn)':'var(--red)')+'">'+fmt(marginPct,1)+'% of recovery</div>'
+      +'</div>'
+      +'<div class="kpi-card kpi-pd fade-in" style="animation-delay:.15s">'
+        +'<div class="kpi-val" style="color:var(--pd)">'+(settled.length ? fmt(avgAcc,1)+'%' : '\u2014')+'</div>'
+        +'<div class="kpi-lbl">Settlement Accuracy</div>'
+        +'<div class="kpi-sub">'+settled.length+' lots settled</div>'
+      +'</div>'
+    +'</div>'
+
+    // ROW 2: Channel split
+    +'<div class="g2">'
+      +channelPanel(elv, 'var(--grn)', 't-elv')
+      +channelPanel(ext, 'var(--pt)', 't-ext')
+    +'</div>'
+
+    // ROW 3: Pipeline + Top Parts
+    +'<div class="g2">'
+
+      // Lot Pipeline Summary
+      +'<div class="panel fade-in" style="animation-delay:.25s">'
+        +'<div class="ph"><span class="ph-title">Lot Pipeline</span><span class="ph-note" style="cursor:pointer;color:var(--gold)" onclick="nav(\'lots\')">Manage \u2192</span></div>'
+        +'<div class="pb">'
+          +'<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:16px">'
+            +'<div style="background:var(--s2);border-radius:8px;padding:14px;text-align:center">'
+              +'<div style="font-family:\'Bebas Neue\';font-size:32px;color:var(--gold);line-height:1">'+building.length+'</div>'
+              +'<div style="font-family:\'DM Mono\',monospace;font-size:8px;color:var(--dim);text-transform:uppercase;letter-spacing:1px;margin-top:4px">Building</div>'
+            +'</div>'
+            +'<div style="background:var(--s2);border-radius:8px;padding:14px;text-align:center">'
+              +'<div style="font-family:\'Bebas Neue\';font-size:32px;color:var(--amb);line-height:1">'+dispatched.length+'</div>'
+              +'<div style="font-family:\'DM Mono\',monospace;font-size:8px;color:var(--dim);text-transform:uppercase;letter-spacing:1px;margin-top:4px">Dispatched</div>'
+            +'</div>'
+            +'<div style="background:var(--s2);border-radius:8px;padding:14px;text-align:center">'
+              +'<div style="font-family:\'Bebas Neue\';font-size:32px;color:var(--grn);line-height:1">'+settled.length+'</div>'
+              +'<div style="font-family:\'DM Mono\',monospace;font-size:8px;color:var(--dim);text-transform:uppercase;letter-spacing:1px;margin-top:4px">Settled</div>'
+            +'</div>'
+          +'</div>'
+          +'<div class="divider"></div>'
+          +'<div style="display:flex;justify-content:space-between;padding:6px 0;font-family:\'DM Mono\',monospace;font-size:11px">'
+            +'<span style="color:var(--dim)">Pipeline Value (building + dispatched)</span>'
+            +'<span style="color:var(--gold)">'+fmtGBP(pipelineValue)+'</span>'
+          +'</div>'
+          +'<div style="display:flex;justify-content:space-between;padding:6px 0;font-family:\'DM Mono\',monospace;font-size:11px">'
+            +'<span style="color:var(--dim)">Total Settled Received</span>'
+            +'<span style="color:var(--grn)">'+fmtGBP(settledTotal)+'</span>'
+          +'</div>'
+        +'</div>'
+      +'</div>'
+
+      // Top Parts by Volume
+      +'<div class="panel fade-in" style="animation-delay:.30s">'
+        +'<div class="ph"><span class="ph-title">Top Parts by Volume</span><span class="ph-note" style="cursor:pointer;color:var(--gold)" onclick="nav(\'assay\')">Assay DB \u2192</span></div>'
+        +'<div class="pb">'
+          +'<table class="tbl"><thead><tr><th>Part No.</th><th>Vehicle</th><th>Type</th><th>Qty</th><th>Total Margin</th></tr></thead><tbody>'
+          +topParts.map(function(tp) {
+            return '<tr onclick="nav(\'assay\')">'
+              +'<td class="mono" style="color:var(--gold)">'+tp.part+'</td>'
+              +'<td style="font-size:12px;color:var(--txt)">'+tp.vehicle+'</td>'
+              +'<td><span class="tag '+(tp.type==='CAT'?'t-cat':'t-dpf')+'">'+tp.type+'</span></td>'
+              +'<td class="mono" style="color:var(--txt)">'+tp.count+'</td>'
+              +'<td class="mono" style="color:'+(tp.totalMargin>=0?'var(--grn)':'var(--red)')+'">'+fmtGBP(tp.totalMargin)+'</td>'
+              +'</tr>';
+          }).join('')
+          +'</tbody></table>'
+        +'</div>'
+      +'</div>'
+
+    +'</div>'
+  +'</div>';
+}
+
+/* ════════════════════════════════════════════
+   UNIT INTAKE
+════════════════════════════════════════════ */
+function renderIntake() {
+  return `
+  <div class="g32">
+    <div>
+      <!-- Method selector -->
+      <div class="intake-methods">
+        <div class="im-card selected" id="im-lookup" onclick="setIntakeMethod('lookup')">
+          <div class="im-icon">🔍</div>
+          <div class="im-title">Part Lookup</div>
+          <div class="im-sub">Search assay database by part number, make/model, or stamp</div>
+        </div>
+        <div class="im-card" id="im-manual" onclick="setIntakeMethod('manual')">
+          <div class="im-icon">✏️</div>
+          <div class="im-title">Manual Entry</div>
+          <div class="im-sub">Enter part details and PGM content manually</div>
+        </div>
+        <div class="im-card" id="im-ai" onclick="setIntakeMethod('ai')">
+          <div class="im-icon">📷</div>
+          <div class="im-title">AI Image Scan</div>
+          <div class="im-sub">Point camera at stamp or unit for instant ID</div>
+        </div>
+      </div>
+
+      <!-- Lookup panel -->
+      <div id="intake-lookup-panel" class="panel">
+        <div class="ph"><span class="ph-title">Part Lookup</span><span class="ph-note">Search by part no., vehicle, make, or stamp</span></div>
+        <div class="pb">
+          <div class="form-row">
+            <input class="form-inp" id="lookup-q" placeholder="e.g. 2E0-K3480 or BMW 320d or 7805496..." oninput="doLookup()" autocomplete="off">
+          </div>
+          <div id="lookup-results" style="display:flex;flex-direction:column;gap:6px;max-height:280px;overflow-y:auto"></div>
+        </div>
+      </div>
+
+      <!-- Manual panel -->
+      <div id="intake-manual-panel" class="panel" style="display:none">
+        <div class="ph"><span class="ph-title">Manual Entry</span></div>
+        <div class="pb">
+          <div class="form-grid">
+            <div class="form-row"><label class="form-lbl">Unit Type</label><select class="form-sel" id="m-type"><option value="CAT">CAT</option><option value="DPF">DPF</option></select></div>
+            <div class="form-row"><label class="form-lbl">Part Number</label><input class="form-inp" id="m-part" placeholder="e.g. 2E0-K3480" oninput="updateIntakeCalc()"></div>
+            <div class="form-row full"><label class="form-lbl">Vehicle Description</label><input class="form-inp" id="m-vehicle" placeholder="e.g. BMW 320d E90 2.0d" oninput="updateIntakeCalc()"></div>
+            <div class="form-row"><label class="form-lbl">Pt (g)</label><input class="form-inp" id="m-pt" type="number" step="0.01" placeholder="0.00" oninput="updateIntakeCalc()"></div>
+            <div class="form-row"><label class="form-lbl">Pd (g)</label><input class="form-inp" id="m-pd" type="number" step="0.01" placeholder="0.00" oninput="updateIntakeCalc()"></div>
+            <div class="form-row"><label class="form-lbl">Rh (g)</label><input class="form-inp" id="m-rh" type="number" step="0.001" placeholder="0.000" oninput="updateIntakeCalc()"></div>
+            <div class="form-row"><label class="form-lbl">Ce (kg)</label><input class="form-inp" id="m-ce" type="number" step="0.1" placeholder="0.0" oninput="updateIntakeCalc()"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- AI panel -->
+      <div id="intake-ai-panel" class="panel" style="display:none">
+        <div class="ph"><span class="ph-title">AI Image Scan</span><span class="ph-note">Identify by stamp or unit photo</span></div>
+        <div class="pb">
+          <div class="ai-scan-frame" onclick="simulateAIScan()">
+            <div class="scan-line" id="scan-line" style="display:none"></div>
+            <div id="scan-idle" style="text-align:center">
+              <div style="font-size:40px;margin-bottom:8px">📷</div>
+              <div style="font-size:13px;font-weight:600;color:var(--txt)">Tap to Scan</div>
+              <div style="font-family:'DM Mono',monospace;font-size:10px;color:var(--dim);margin-top:4px">Point camera at stamp or full unit</div>
+            </div>
+            <div id="scan-progress" style="display:none;text-align:center">
+              <div style="font-size:30px;margin-bottom:8px;animation:spin 1s linear infinite;display:inline-block">◎</div>
+              <div style="font-family:'DM Mono',monospace;font-size:11px;color:var(--gold)">Analysing image...</div>
+            </div>
+          </div>
+          <div class="scan-result" id="scan-result"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- RIGHT: selected unit + intake form -->
+    <div style="display:flex;flex-direction:column;gap:14px">
+
+      <!-- Selected part info -->
+      <div class="panel" id="selected-part-panel">
+        <div class="ph"><span class="ph-title">Selected Unit</span></div>
+        <div class="pb" id="selected-part-body">
+          <div style="text-align:center;padding:20px;font-family:'DM Mono',monospace;font-size:11px;color:var(--dim)">
+            Search or scan to select a unit above
+          </div>
+        </div>
+      </div>
+
+      <!-- Intake details -->
+      <div class="panel" id="intake-details-panel" style="display:none">
+        <div class="ph"><span class="ph-title">Intake Details</span></div>
+        <div class="pb">
+          <div class="form-row">
+            <label class="form-lbl">Source</label>
+            <div class="source-btns">
+              <div class="source-btn sel-elv" id="src-ELV"   onclick="setSource('ELV')">🔧 ELV</div>
+              <div class="source-btn"          id="src-External" onclick="setSource('External')">🏢 External</div>
+              <div class="source-btn"          id="src-Walk-in"  onclick="setSource('Walk-in')">🚶 Walk-in</div>
+            </div>
+          </div>
+          <div class="form-row">
+            <label class="form-lbl">Condition / Grade</label>
+            <div class="grade-btns">
+              <div class="grade-btn sel-intact" id="grade-intact" onclick="setGrade('intact')">
+                <div class="gb-lbl" style="color:var(--grn)">Intact</div>
+                <div class="gb-pct" style="color:var(--grn)">100%</div>
+              </div>
+              <div class="grade-btn" id="grade-cracked" onclick="setGrade('cracked')">
+                <div class="gb-lbl">Cracked</div>
+                <div class="gb-pct" style="color:var(--amb)">65%</div>
+              </div>
+              <div class="grade-btn" id="grade-gutted" onclick="setGrade('gutted')">
+                <div class="gb-lbl">Gutted</div>
+                <div class="gb-pct" style="color:var(--red)">18%</div>
+              </div>
+            </div>
+          </div>
+          <div class="form-row">
+            <label class="form-lbl">Notes</label>
+            <input class="form-inp" id="intake-notes" placeholder="Optional — stamp codes, condition notes...">
+          </div>
+        </div>
+      </div>
+
+      <!-- Live buy calculator -->
+      <div class="panel" id="buy-calc-panel" style="display:none">
+        <div class="ph"><span class="ph-title">Buy Price Calculator</span><span class="ph-note">Live at today's PGM spot</span></div>
+        <div class="pb">
+          <div class="buy-calc" id="buy-calc-body"></div>
+          <div class="form-row" style="margin-top:12px">
+            <label class="form-lbl">Agreed Buy Price (£)</label>
+            <input class="form-inp" id="buy-price-inp" type="number" step="1" placeholder="Enter price paid..." oninput="updateBuyMargin()">
+          </div>
+          <div id="buy-margin-line" style="font-family:'DM Mono',monospace;font-size:11px;color:var(--dim);margin-top:4px"></div>
+          <button class="btn btn-gold" style="width:100%;margin-top:12px;justify-content:center" onclick="openIntakeConfirm()">
+            ✓ Add to Inventory
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>`;
+}
+
+let currentIntakeUnit = null;
+
+function attachIntakeListeners() {
+  // Auto-show lookup panel on load
+  doLookup();
+}
+
+function setIntakeMethod(method) {
+  STATE.intake.method = method;
+  ['lookup','manual','ai'].forEach(m => {
+    document.getElementById('im-'+m).classList.toggle('selected', m === method);
+    const panel = document.getElementById('intake-'+m+'-panel');
+    if (panel) panel.style.display = m === method ? 'block' : 'none';
+  });
+  if (method !== 'lookup' && method !== 'ai') {
+    updateIntakeCalc();
+  }
+}
+
+function doLookup() {
+  const q = (document.getElementById('lookup-q')?.value || '').toLowerCase();
+  const res = document.getElementById('lookup-results');
+  if (!res) return;
+  if (!q) { res.innerHTML = '<div style="font-family:\'DM Mono\',monospace;font-size:10px;color:var(--dim);padding:8px 0">Start typing to search assay database...</div>'; return; }
+
+  const matches = STATE.assayDB.filter(p =>
+    p.part.toLowerCase().includes(q) ||
+    p.vehicle.toLowerCase().includes(q) ||
+    p.make.toLowerCase().includes(q) ||
+    (p.notes||'').toLowerCase().includes(q)
+  ).slice(0, 6);
+
+  if (!matches.length) { res.innerHTML = '<div style="font-family:\'DM Mono\',monospace;font-size:10px;color:var(--dim);padding:8px 0">No match found — try manual entry or AI scan</div>'; return; }
+
+  res.innerHTML = matches.map(p => {
+    const net = calcNetRecovery(p);
+    const band = calcBuyBand(net);
+    return `<div onclick="selectAssayPart(${p.id})" style="background:var(--s2);border:1px solid var(--b1);border-radius:8px;padding:12px;cursor:pointer;transition:.15s" onmouseenter="this.style.borderColor='var(--gold3)'" onmouseleave="this.style.borderColor='var(--b1)'">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">
+        <span class="tag ${p.type==='CAT'?'t-cat':'t-dpf'}">${p.type}</span>
+        <span style="font-family:'DM Mono',monospace;font-size:10px;color:var(--gold)">${p.part}</span>
+        <span style="font-size:12px;font-weight:600;color:var(--txt);flex:1">${p.vehicle}</span>
+      </div>
+      <div style="display:flex;justify-content:space-between;align-items:center">
+        <span style="font-family:'DM Mono',monospace;font-size:9px;color:var(--dim)">Pt ${p.pt_g}g · Pd ${p.pd_g}g · Rh ${p.rh_g}g</span>
+        <span style="font-family:'DM Mono',monospace;font-size:11px;color:var(--gold);font-weight:500">Buy £${band.min}–£${band.max}</span>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function selectAssayPart(id) {
+  const part = STATE.assayDB.find(p => p.id === id);
+  if (!part) return;
+  currentIntakeUnit = {...part};
+  updateSelectedPartPanel(part);
+  updateIntakeCalcFromPart(part);
+  document.getElementById('intake-details-panel').style.display = 'block';
+  document.getElementById('buy-calc-panel').style.display = 'block';
+}
+
+function updateSelectedPartPanel(part) {
+  const net = calcNetRecovery(part);
+  const band = calcBuyBand(net);
+  document.getElementById('selected-part-body').innerHTML = `
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px">
+      <span class="tag ${part.type==='CAT'?'t-cat':'t-dpf'}" style="font-size:11px;padding:4px 10px">${part.type}</span>
+      <div>
+        <div style="font-family:'DM Mono',monospace;font-size:12px;color:var(--gold)">${part.part}</div>
+        <div style="font-size:14px;font-weight:600;color:var(--txt)">${part.vehicle}</div>
+      </div>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;font-family:'DM Mono',monospace;font-size:10px">
+      <div style="background:var(--s2);border-radius:6px;padding:8px">
+        <div style="color:var(--dim);font-size:8px;text-transform:uppercase;letter-spacing:1px;margin-bottom:4px">PGM Content</div>
+        <div style="color:var(--pt)">Pt: ${part.pt_g}g</div>
+        <div style="color:var(--pd)">Pd: ${part.pd_g}g</div>
+        <div style="color:var(--rh)">Rh: ${part.rh_g}g</div>
+        ${part.ce_kg > 0 ? `<div style="color:var(--ce)">Ce: ${part.ce_kg}kg</div>` : ''}
+      </div>
+      <div style="background:var(--s2);border-radius:6px;padding:8px">
+        <div style="color:var(--dim);font-size:8px;text-transform:uppercase;letter-spacing:1px;margin-bottom:4px">Valuation</div>
+        <div style="color:var(--grn)">Net: ${fmtGBP(net)}</div>
+        <div style="color:var(--gold)">Min: £${band.min}</div>
+        <div style="color:var(--gold2)">Max: £${band.max}</div>
+      </div>
+    </div>
+    ${part.notes ? `<div style="margin-top:10px;font-family:'DM Mono',monospace;font-size:10px;color:var(--dim);font-style:italic">${part.notes}</div>` : ''}`;
+}
+
+function updateIntakeCalcFromPart(part) {
+  const net = calcNetRecovery(part);
+  const gm = gradeMultiplier(STATE.intake.grade);
+  const adjNet = net * gm;
+  const band = calcBuyBand(adjNet);
+  const p = STATE.prices;
+  document.getElementById('buy-calc-body').innerHTML = `
+    <div class="bc-row"><span class="bc-lbl">Pt recovery</span><span class="bc-val" style="color:var(--pt)">£${(part.pt_g * p.pt.gbpPerG * STATE.recovery.pt).toFixed(2)}</span></div>
+    <div class="bc-row"><span class="bc-lbl">Pd recovery</span><span class="bc-val" style="color:var(--pd)">£${(part.pd_g * p.pd.gbpPerG * STATE.recovery.pd).toFixed(2)}</span></div>
+    <div class="bc-row"><span class="bc-lbl">Rh recovery</span><span class="bc-val" style="color:var(--rh)">£${(part.rh_g * p.rh.gbpPerG * STATE.recovery.rh).toFixed(2)}</span></div>
+    ${part.ce_kg > 0 ? `<div class="bc-row"><span class="bc-lbl">Ce recovery</span><span class="bc-val" style="color:var(--ce)">£${(part.ce_kg * p.ce.gbpPerKg).toFixed(2)}</span></div>` : ''}
+    <div class="bc-row"><span class="bc-lbl">Grade adj. (${STATE.intake.grade})</span><span class="bc-val">${Math.round(gm*100)}%</span></div>
+    <div class="bc-row" style="border-top:1px solid var(--b2);padding-top:6px"><span class="bc-lbl" style="color:var(--txt)">Net Recovery</span><span class="bc-val" style="color:var(--grn);font-size:13px">${fmtGBP(adjNet)}</span></div>
+    <div class="bc-band">
+      <span class="bc-min">£${band.min}</span>
+      <span class="bc-sep">—</span>
+      <span class="bc-max">£${band.max}</span>
+      <span class="bc-unit">buy range</span>
+    </div>`;
+}
+
+function updateIntakeCalc() { if (currentIntakeUnit) updateIntakeCalcFromPart(currentIntakeUnit); }
+
+function setSource(src) {
+  STATE.intake.source = src;
+  ['ELV','External','Walk-in'].forEach(s => {
+    const el = document.getElementById('src-' + s);
+    if (!el) return;
+    el.className = 'source-btn ' + (s === src ? 'sel-' + s.toLowerCase().replace('-','') : '');
+  });
+  // Re-fix Walk-in class
+  const walkEl = document.getElementById('src-Walk-in');
+  if (walkEl && src === 'Walk-in') walkEl.className = 'source-btn sel-walk';
+}
+
+function setGrade(grade) {
+  STATE.intake.grade = grade;
+  ['intact','cracked','gutted'].forEach(g => {
+    const el = document.getElementById('grade-' + g);
+    if (!el) return;
+    el.className = 'grade-btn ' + (g === grade ? 'sel-' + g : '');
+  });
+  updateIntakeCalc();
+}
+
+function updateBuyMargin() {
+  const price = parseFloat(document.getElementById('buy-price-inp')?.value || 0);
+  if (!price || !currentIntakeUnit) return;
+  const net = calcNetRecovery(currentIntakeUnit) * gradeMultiplier(STATE.intake.grade);
+  const margin = net - price;
+  const pctM = (margin / net * 100).toFixed(1);
+  const el = document.getElementById('buy-margin-line');
+  if (el) el.innerHTML = `Margin at this price: <strong style="color:${margin>=0?'var(--grn)':'var(--red)'}">${fmtGBP(margin)}</strong> (${pctM}% of recovery)`;
+}
+
+function simulateAIScan() {
+  const idle = document.getElementById('scan-idle');
+  const progress = document.getElementById('scan-progress');
+  const line = document.getElementById('scan-line');
+  const result = document.getElementById('scan-result');
+  if (!idle) return;
+  idle.style.display = 'none';
+  progress.style.display = 'block';
+  line.style.display = 'block';
+  setTimeout(() => {
+    progress.style.display = 'none';
+    line.style.display = 'none';
+    const match = STATE.assayDB[1]; // simulate matching Audi Q7
+    result.style.display = 'block';
+    result.innerHTML = `
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">
+        <span style="font-size:20px">✓</span>
+        <span style="font-family:'DM Mono',monospace;font-size:11px;color:var(--grn)">94% confidence match</span>
+      </div>
+      <div style="font-size:14px;font-weight:600;color:var(--txt);margin-bottom:4px">${match.vehicle}</div>
+      <div style="font-family:'DM Mono',monospace;font-size:11px;color:var(--gold);margin-bottom:8px">${match.part}</div>
+      <button class="btn btn-gold btn-sm" onclick="selectAssayPart(${match.id})">Use This Match →</button>`;
+    idle.style.display = 'block';
+  }, 2200);
+}
+
+function openIntakeConfirm() {
+  if (!currentIntakeUnit) return;
+  const price = parseFloat(document.getElementById('buy-price-inp')?.value || 0);
+  if (!price) { showToast('Enter the agreed buy price first', 'var(--amb)', '⚠'); return; }
+  const net = calcNetRecovery(currentIntakeUnit) * gradeMultiplier(STATE.intake.grade);
+  const margin = net - price;
+  const notes = document.getElementById('intake-notes')?.value || '';
+
+  document.getElementById('intake-confirm-body').innerHTML = `
+    <div style="background:var(--s2);border:1px solid var(--b1);border-radius:8px;padding:14px;margin-bottom:14px">
+      <div style="display:flex;gap:8px;align-items:center;margin-bottom:8px">
+        <span class="tag ${currentIntakeUnit.type==='CAT'?'t-cat':'t-dpf'}">${currentIntakeUnit.type}</span>
+        <span style="font-size:14px;font-weight:600;color:var(--txt)">${currentIntakeUnit.vehicle}</span>
+      </div>
+      <div style="font-family:'DM Mono',monospace;font-size:10px;color:var(--dim)">${currentIntakeUnit.part}</div>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;font-family:'DM Mono',monospace;font-size:11px">
+      <div><span style="color:var(--dim)">Source: </span><span class="tag t-${STATE.intake.source.toLowerCase().replace('-','')}">${STATE.intake.source}</span></div>
+      <div><span style="color:var(--dim)">Grade: </span><span style="color:var(--txt);text-transform:capitalize">${STATE.intake.grade}</span></div>
+      <div><span style="color:var(--dim)">Buy Price: </span><span style="color:var(--gold)">£${price}</span></div>
+      <div><span style="color:var(--dim)">Est. Margin: </span><span style="color:${margin>=0?'var(--grn)':'var(--red)'}">£${Math.round(margin)}</span></div>
+      <div style="grid-column:1/-1"><span style="color:var(--dim)">Est. Net Recovery: </span><span style="color:var(--grn)">${fmtGBP(net)}</span></div>
+    </div>`;
+
+  STATE.intake._pendingBuyPrice = price;
+  STATE.intake._pendingNotes = notes;
+  document.getElementById('modal-intake-confirm').classList.add('open');
+}
+
+function confirmIntake() {
+  if (!currentIntakeUnit) return;
+  const newId = 'U-' + String(STATE.nextUnitId).padStart(4,'0');
+  STATE.nextUnitId++;
+  const newUnit = {
+    id: newId,
+    part: currentIntakeUnit.part,
+    vehicle: currentIntakeUnit.vehicle,
+    type: currentIntakeUnit.type,
+    source: STATE.intake.source,
+    grade: STATE.intake.grade,
+    bought: STATE.intake._pendingBuyPrice,
+    pt_g: currentIntakeUnit.pt_g, pd_g: currentIntakeUnit.pd_g,
+    rh_g: currentIntakeUnit.rh_g, ce_kg: currentIntakeUnit.ce_kg,
+    weight: currentIntakeUnit.weight,
+    daysIn: 0, lot: null,
+    notes: STATE.intake._pendingNotes || '',
+  };
+  STATE.inventory.unshift(newUnit);
+  closeModal('modal-intake-confirm');
+  showToast(newId + ' added — ' + newUnit.vehicle, 'var(--grn)', '⊕');
+  // Update sidebar badge
+  updateNavBadges();
+  // Reset form
+  currentIntakeUnit = null;
+  nav('inventory');
+}
+
+/* ════════════════════════════════════════════
+   INVENTORY
+════════════════════════════════════════════ */
+function renderInventory() {
+  const filter = STATE.ui.invFilter;
+  const q = STATE.ui.invSearch.toLowerCase();
+  let units = STATE.inventory.filter(u => {
+    const mf = filter === 'all' || u.type === filter || u.source === filter || (filter === 'at-risk' && u.daysIn > 21) || (filter === 'in-lot' && u.lot);
+    const mq = !q || u.id.toLowerCase().includes(q) || u.vehicle.toLowerCase().includes(q) || u.part.toLowerCase().includes(q);
+    return mf && mq;
+  });
+
+  return `
+  <div style="display:flex;flex-direction:column;gap:14px">
+    <!-- Filters -->
+    <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+      <div class="search-wrap" style="max-width:300px">
+        <span class="search-ic">🔍</span>
+        <input class="search-inp" placeholder="Search unit ID, part, vehicle..." value="${STATE.ui.invSearch}" oninput="STATE.ui.invSearch=this.value;renderView('inventory')">
+      </div>
+      ${['all','CAT','DPF','ELV','External','Walk-in','at-risk','in-lot'].map(f => `
+        <div class="chip ${filter===f?'on':''}" onclick="STATE.ui.invFilter='${f}';renderView('inventory')">${f==='at-risk'?'⚠ At Risk':f==='in-lot'?'In Lot':f==='all'?'All':f}</div>`).join('')}
+      <span style="font-family:'DM Mono',monospace;font-size:10px;color:var(--dim);margin-left:auto">${units.length} units shown</span>
+    </div>
+
+    <!-- Table -->
+    <div class="panel">
+      <table class="tbl">
+        <thead>
+          <tr>
+            <th>ID</th><th>Unit</th><th>Part No.</th><th>Source</th><th>Grade</th>
+            <th>PGM Content</th><th>Est. Recovery</th><th>Bought</th><th>Margin</th><th>Age</th><th>Lot</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${units.map(u => {
+            const net = calcNetRecovery(u) * gradeMultiplier(u.grade);
+            const margin = net - u.bought;
+            const ageClass = u.daysIn > 30 ? 'age-crit' : u.daysIn > 21 ? 'age-warn' : '';
+            return `<tr onclick="showUnitDetail('${u.id}')">
+              <td class="mono" style="color:var(--gold)">${u.id}</td>
+              <td>
+                <div style="font-size:12px;font-weight:500;color:var(--txt)">${u.vehicle}</div>
+                <div class="mono" style="font-size:9px;color:var(--dim);margin-top:1px">${u.make||''}</div>
+              </td>
+              <td class="mono" style="color:var(--mid)">${u.part}</td>
+              <td><span class="tag t-${u.source.toLowerCase().replace('-','')}">${u.source}</span></td>
+              <td><span class="tag t-${u.grade}">${u.grade}</span></td>
+              <td>
+                <div style="font-family:'DM Mono',monospace;font-size:9px;line-height:1.7">
+                  ${u.pt_g > 0 ? `<span style="color:var(--pt)">Pt ${u.pt_g}g</span> ` : ''}
+                  ${u.pd_g > 0 ? `<span style="color:var(--pd)">Pd ${u.pd_g}g</span> ` : ''}
+                  ${u.rh_g > 0 ? `<span style="color:var(--rh)">Rh ${u.rh_g}g</span>` : ''}
+                  ${u.ce_kg > 0 ? `<span style="color:var(--ce)">Ce ${u.ce_kg}kg</span>` : ''}
+                  ${!u.pt_g && !u.pd_g && !u.rh_g && !u.ce_kg ? '<span style="color:var(--dim)">—</span>' : ''}
+                </div>
+              </td>
+              <td class="mono" style="color:var(--grn)">${fmtGBP(net)}</td>
+              <td class="mono" style="color:var(--gold)">£${u.bought}</td>
+              <td class="mono" style="color:${margin>=0?'var(--grn)':'var(--red)'}">${fmtGBP(margin)}</td>
+              <td class="mono ${ageClass}">${u.daysIn}d</td>
+              <td class="mono" style="color:${u.lot?'var(--ce)':'var(--dim)'}">${u.lot||'—'}</td>
+            </tr>`;
+          }).join('')}
+        </tbody>
+      </table>
+    </div>
+  </div>`;
+}
+
+function showUnitDetail(id) {
+  showToast('Unit ' + id + ' — detail view coming in next build', 'var(--ce)', '≡');
+}
+
+/* ════════════════════════════════════════════
+   LOTS & DISPATCH
+════════════════════════════════════════════ */
+function renderLots() {
+  const available = STATE.inventory.filter(u => !u.lot && u.grade !== 'gutted');
+  return `
+  <div style="display:flex;flex-direction:column;gap:16px">
+    <div style="display:flex;justify-content:space-between;align-items:center">
+      <div style="font-family:'DM Mono',monospace;font-size:10px;color:var(--dim)">${STATE.lots.length} lots · ${available.length} units available to lot</div>
+      <button class="btn btn-gold" onclick="openNewLot()">+ Create New Lot</button>
+    </div>
+    <div class="g2">
+      ${STATE.lots.map(lot => {
+        const lotUnits = STATE.inventory.filter(u => u.lot === lot.id);
+        const estVal = lotUnits.reduce((s,u) => s + calcNetRecovery(u)*gradeMultiplier(u.grade), 0) || lot.estValue;
+        const estCost = lotUnits.reduce((s,u) => s + u.bought, 0);
+        const statusColors = { building:'var(--gold)', dispatched:'var(--amb)', settled:'var(--grn)' };
+        return `
+        <div class="panel">
+          <div style="background:${lot.status==='settled'?'rgba(76,186,136,.05)':lot.status==='dispatched'?'rgba(224,160,56,.05)':'rgba(201,168,76,.05)'}">
+            <div class="ph" style="border-bottom:1px solid var(--b1)">
+              <div>
+                <div style="font-family:'Bebas Neue';font-size:20px;letter-spacing:2px;color:var(--gold)">${lot.id}</div>
+                <div style="font-family:'DM Mono',monospace;font-size:9px;color:var(--dim);margin-top:2px">${lot.refiner} · Created ${lot.created}</div>
+              </div>
+              <span class="tag" style="background:none;color:${statusColors[lot.status]};border:1px solid ${statusColors[lot.status]};text-transform:capitalize">${lot.status}</span>
+            </div>
+            <div class="pb" style="padding:14px 16px">
+              ${lot.status === 'building' ? `
+                <div style="margin-bottom:12px">
+                  <div style="font-family:'DM Mono',monospace;font-size:9px;color:var(--dim);text-transform:uppercase;letter-spacing:1.5px;margin-bottom:6px">Units in this Lot</div>
+                  ${lotUnits.length ? lotUnits.map(u => `
+                    <div style="display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid var(--b1);font-size:12px">
+                      <span class="tag ${u.type==='CAT'?'t-cat':'t-dpf'}">${u.type}</span>
+                      <span style="color:var(--txt);flex:1">${u.vehicle}</span>
+                      <span class="mono" style="color:var(--grn)">${fmtGBP(calcNetRecovery(u))}</span>
+                    </div>`).join('') : `<div style="font-family:'DM Mono',monospace;font-size:10px;color:var(--dim);padding:8px 0">No units added yet</div>`}
+                  <div style="display:flex;gap:6px;margin-top:10px">
+                    <button class="btn btn-s btn-sm" onclick="addToLot('${lot.id}')">+ Add Units</button>
+                    ${lotUnits.length > 0 ? `<button class="btn btn-grn btn-sm" onclick="dispatchLot('${lot.id}')">▶ Dispatch to ${lot.refiner}</button>` : ''}
+                  </div>
+                </div>` : ''}
+              <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;font-family:'DM Mono',monospace;font-size:11px">
+                <div><span style="color:var(--dim)">Units: </span><span style="color:var(--txt)">${lotUnits.length || lot.unitIds.length}</span></div>
+                <div><span style="color:var(--dim)">Refiner: </span><span style="color:var(--txt)">${lot.refiner}</span></div>
+                <div><span style="color:var(--dim)">Est. Value: </span><span style="color:var(--grn)">${fmtGBP(estVal)}</span></div>
+                ${lot.settledValue ? `<div><span style="color:var(--dim)">Settled: </span><span style="color:var(--grn)">${fmtGBP(lot.settledValue)} (${fmt(lot.settledValue/lot.estValue*100,1)}%)</span></div>` : `<div><span style="color:var(--dim)">Dispatched: </span><span style="color:var(--txt)">${lot.dispatched||'Pending'}</span></div>`}
+              </div>
+              <div style="font-family:'DM Mono',monospace;font-size:10px;color:var(--dim);margin-top:8px;font-style:italic">${lot.notes}</div>
+            </div>
+          </div>
+        </div>`;
+      }).join('')}
+    </div>
+  </div>`;
+}
+
+function openNewLot() {
+  const available = STATE.inventory.filter(u => !u.lot);
+  document.getElementById('lot-create-body').innerHTML = `
+    <div class="form-row"><label class="form-lbl">Lot ID</label><input class="form-inp" id="new-lot-id" value="LOT-010" readonly style="color:var(--gold)"></div>
+    <div class="form-row"><label class="form-lbl">Refiner</label><select class="form-sel" id="new-lot-ref"><option>Johnson Matthey</option><option>Umicore</option><option>BASF Catalysts</option><option>Heraeus</option></select></div>
+    <div class="form-row"><label class="form-lbl">Notes</label><input class="form-inp" id="new-lot-notes" placeholder="Target unit count, grade mix, etc."></div>
+    <div style="font-family:'DM Mono',monospace;font-size:10px;color:var(--dim);margin-top:8px">${available.length} units currently available to add to this lot after creation.</div>`;
+  document.getElementById('modal-lot-create').classList.add('open');
+}
+
+function confirmLot() {
+  const id = document.getElementById('new-lot-id').value;
+  const refiner = document.getElementById('new-lot-ref').value;
+  const notes = document.getElementById('new-lot-notes').value;
+  STATE.lots.unshift({ id, refiner, created: new Date().toLocaleDateString('en-GB',{day:'2-digit',month:'short',year:'2-digit'}), dispatched:null, status:'building', unitIds:[], estValue:0, settledValue:null, notes });
+  closeModal('modal-lot-create');
+  showToast(id + ' created — ready to add units', 'var(--grn)', '⬡');
+  renderView('lots');
+}
+
+function addToLot(lotId) {
+  showToast('Select units from Inventory to add to ' + lotId, 'var(--ce)', '⬡');
+}
+
+function dispatchLot(lotId) {
+  const lot = STATE.lots.find(l => l.id === lotId);
+  if (!lot) return;
+  lot.status = 'dispatched';
+  lot.dispatched = new Date().toLocaleDateString('en-GB',{day:'2-digit',month:'short',year:'2-digit'});
+  showToast(lotId + ' dispatched to ' + lot.refiner, 'var(--grn)', '▶');
+  renderView('lots');
+}
+
+/* ════════════════════════════════════════════
+   ANALYTICS
+════════════════════════════════════════════ */
+function renderAnalytics() {
+  const inv = STATE.inventory;
+  const cats = inv.filter(u=>u.type==='CAT');
+  const dpfs = inv.filter(u=>u.type==='DPF');
+  const catVal = cats.reduce((s,u)=>s+calcNetRecovery(u)*gradeMultiplier(u.grade),0);
+  const dpfVal = dpfs.reduce((s,u)=>s+calcNetRecovery(u)*gradeMultiplier(u.grade),0);
+  const catCost = cats.reduce((s,u)=>s+u.bought,0);
+  const dpfCost = dpfs.reduce((s,u)=>s+u.bought,0);
+  const catMargin = catVal-catCost;
+  const dpfMargin = dpfVal-dpfCost;
+  const bySource = ['ELV','External','Walk-in'].map(src => {
+    const us = inv.filter(u=>u.source===src);
+    const v = us.reduce((s,u)=>s+calcNetRecovery(u)*gradeMultiplier(u.grade),0);
+    const c = us.reduce((s,u)=>s+u.bought,0);
+    return { src, count:us.length, value:v, cost:c, margin:v-c, avgMargin: us.length ? (v-c)/us.length : 0 };
+  });
+
+  return `
+  <div style="display:flex;flex-direction:column;gap:16px">
+    <div class="g4">
+      <div class="kpi-card kpi-gold">
+        <div class="kpi-val" style="color:var(--gold)">${fmtGBP(catMargin+dpfMargin)}</div>
+        <div class="kpi-lbl">Total Est. Margin</div>
+        <div class="kpi-sub">${fmt((catMargin+dpfMargin)/(catVal+dpfVal)*100,1)}% of recovery</div>
+      </div>
+      <div class="kpi-card kpi-pt">
+        <div class="kpi-val" style="color:var(--pt)">${fmtGBP(catMargin)}</div>
+        <div class="kpi-lbl">CAT Margin</div>
+        <div class="kpi-sub">${cats.length} units · avg £${cats.length?Math.round(catMargin/cats.length):0}</div>
+      </div>
+      <div class="kpi-card kpi-pd">
+        <div class="kpi-val" style="color:var(--pd)">${fmtGBP(dpfMargin)}</div>
+        <div class="kpi-lbl">DPF Margin</div>
+        <div class="kpi-sub">${dpfs.length} units · avg £${dpfs.length?Math.round(dpfMargin/dpfs.length):0}</div>
+      </div>
+      <div class="kpi-card kpi-grn">
+        <div class="kpi-val" style="color:var(--grn)">${fmt((STATE.lots.filter(l=>l.settledValue).reduce((s,l)=>s+l.settledValue/l.estValue,0)/Math.max(STATE.lots.filter(l=>l.settledValue).length,1))*100,1)}%</div>
+        <div class="kpi-lbl">Settlement Accuracy</div>
+        <div class="kpi-sub">${STATE.lots.filter(l=>l.settledValue).length} settled lots</div>
+      </div>
+    </div>
+
+    <div class="g2">
+      <!-- Margin by source -->
+      <div class="panel">
+        <div class="ph"><span class="ph-title">Margin by Source</span><span class="ph-note">Est. gross margin per unit</span></div>
+        <div class="pb">
+          ${bySource.map(s => {
+            const maxMargin = Math.max(...bySource.map(x=>x.avgMargin), 1);
+            return `
+            <div style="margin-bottom:16px">
+              <div style="display:flex;justify-content:space-between;margin-bottom:5px">
+                <span class="tag t-${s.src.toLowerCase().replace('-','')}">${s.src}</span>
+                <span style="font-family:'DM Mono',monospace;font-size:11px;color:var(--grn)">${fmtGBP(s.avgMargin)}/unit</span>
+              </div>
+              <div class="prog-track">
+                <div class="prog-fill" style="width:${s.count?s.avgMargin/maxMargin*100:0}%;background:var(--grn)"></div>
+              </div>
+              <div style="display:flex;justify-content:space-between;margin-top:4px;font-family:'DM Mono',monospace;font-size:9px;color:var(--dim)">
+                <span>${s.count} units</span>
+                <span>${fmtGBP(s.margin)} total margin</span>
+              </div>
+            </div>`;
+          }).join('')}
+        </div>
+      </div>
+
+      <!-- Stock age analysis -->
+      <div class="panel">
+        <div class="ph"><span class="ph-title">Stock Age Distribution</span></div>
+        <div class="pb">
+          ${[{label:'0–7 days',min:0,max:7,color:'var(--grn)'},{label:'8–21 days',min:8,max:21,color:'var(--mid)'},{label:'22–45 days',min:22,max:45,color:'var(--amb)'},{label:'45+ days',min:46,max:9999,color:'var(--red)'}].map(b => {
+            const units = inv.filter(u=>u.daysIn>=b.min && u.daysIn<=b.max);
+            return `
+            <div style="margin-bottom:14px">
+              <div style="display:flex;justify-content:space-between;margin-bottom:5px">
+                <span style="font-family:'DM Mono',monospace;font-size:10px;color:${b.color}">${b.label}</span>
+                <span style="font-family:'DM Mono',monospace;font-size:11px;color:var(--txt)">${units.length} units</span>
+              </div>
+              <div class="prog-track">
+                <div class="prog-fill" style="width:${inv.length?units.length/inv.length*100:0}%;background:${b.color}"></div>
+              </div>
+            </div>`;
+          }).join('')}
+        </div>
+      </div>
+    </div>
+
+    <!-- Monthly volume chart (simulated) -->
+    <div class="panel">
+      <div class="ph"><span class="ph-title">Monthly Intake Volume (Last 8 Months)</span></div>
+      <div style="padding:16px;height:140px;display:flex;align-items:flex-end;gap:6px">
+        ${[{m:'Aug',v:68},{m:'Sep',v:74},{m:'Oct',v:82},{m:'Nov',v:91},{m:'Dec',v:58},{m:'Jan',v:103},{m:'Feb',v:118},{m:'Mar',v:42,cur:true}].map(b => `
+        <div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:4px">
+          <span style="font-family:'DM Mono',monospace;font-size:8px;color:${b.cur?'var(--gold)':'var(--grn)'}">${b.v}</span>
+          <div style="width:100%;background:${b.cur?'var(--gold)':'var(--grn)'};opacity:${b.cur?1:.6};border-radius:3px 3px 0 0;height:${b.v/118*80}px"></div>
+          <span style="font-family:'DM Mono',monospace;font-size:8px;color:${b.cur?'var(--gold)':'var(--dim)'}">${b.m}</span>
+        </div>`).join('')}
+      </div>
+    </div>
+  </div>`;
+}
+
+/* ---- ASSAY DATABASE ---- */
+function renderAssay() {
+  var q = STATE.ui.assaySearch.toLowerCase();
+  var f = STATE.ui.assayFilter;
+  var makeSet = {};
+  STATE.assayDB.forEach(function(p){ if(p.make) makeSet[p.make] = (makeSet[p.make]||0)+1; });
+  var topMakes = Object.keys(makeSet).sort(function(a,b){ return makeSet[b]-makeSet[a]; }).slice(0,5);
+
+  var parts = STATE.assayDB.filter(function(p) {
+    var mq = !q || p.part.toLowerCase().indexOf(q)>=0 || p.vehicle.toLowerCase().indexOf(q)>=0 || (p.make||'').toLowerCase().indexOf(q)>=0 || (p.notes||'').toLowerCase().indexOf(q)>=0;
+    var mf = f==='all' || p.type===f || p.make===f;
+    return mq && mf;
+  });
+
+  var chipHtml = ['all','CAT','DPF'].concat(topMakes).map(function(c){
+    return '<div class="chip '+(STATE.ui.assayFilter===c?'on':'')+'" onclick="STATE.ui.assayFilter=\''+c.replace(/'/g,"\\'")+'\';renderView(\'assay\')">'+c+'</div>';
+  }).join('');
+
+  var rrHtml = ['pt','pd','rh'].map(function(m){
+    return '<div style="display:flex;align-items:center;gap:6px"><span style="font-family:\'DM Mono\',monospace;font-size:10px;color:var(--'+m+')">'+m.toUpperCase()+'</span>'
+      +'<input type="number" value="'+Math.round(STATE.recovery[m]*100)+'" min="80" max="100" style="width:46px;background:var(--s3);border:1px solid var(--b2);border-radius:4px;padding:3px 6px;color:var(--txt);font-family:\'DM Mono\',monospace;font-size:11px;text-align:center;outline:none" oninput="STATE.recovery.'+m+'=this.value/100;renderView(\'assay\')">'
+      +'<span style="font-family:\'DM Mono\',monospace;font-size:9px;color:var(--dim)">%</span></div>';
+  }).join('');
+
+  var rows = parts.map(function(p){
+    var net = calcNetRecovery(p);
+    var band = calcBuyBand(net);
+    var cc = p.conf==='high'?'var(--grn)':p.conf==='med'?'var(--amb)':'var(--red)';
+    return '<tr onclick="showPartDetail('+p.id+')">'
+      +'<td class="mono" style="color:var(--gold)">'+p.part+'</td>'
+      +'<td><div style="font-size:12px;color:var(--txt)">'+p.vehicle+'</div><div class="mono" style="font-size:9px;color:var(--dim)">'+(p.make||'')+'</div></td>'
+      +'<td><span class="tag '+(p.type==='CAT'?'t-cat':'t-dpf')+'">'+p.type+'</span></td>'
+      +'<td class="mono" style="color:var(--pt)">'+p.pt_g+'g</td>'
+      +'<td class="mono" style="color:var(--pd)">'+p.pd_g+'g</td>'
+      +'<td class="mono" style="color:var(--rh)">'+p.rh_g+'g</td>'
+      +'<td class="mono" style="color:var(--ce)">'+(p.ce_kg>0?p.ce_kg+'kg':'\u2014')+'</td>'
+      +'<td class="mono" style="color:var(--grn)">'+fmtGBP(net)+'</td>'
+      +'<td class="mono" style="color:var(--gold)">\u00a3'+band.min+'</td>'
+      +'<td class="mono" style="color:var(--gold2)">\u00a3'+band.max+'</td>'
+      +'<td class="mono" style="color:'+cc+'">'+p.conf+'</td></tr>';
+  }).join('');
+
+  return '<div style="display:flex;flex-direction:column;gap:14px">'
+    +'<div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">'
+    +'<div class="search-wrap" style="max-width:320px"><span class="search-ic">\ud83d\udd0d</span>'
+    +'<input class="search-inp" placeholder="Part no., vehicle, make, stamp..." value="'+STATE.ui.assaySearch+'" oninput="STATE.ui.assaySearch=this.value;renderView(\'assay\')"></div>'
+    +chipHtml
+    +'<span style="font-family:\'DM Mono\',monospace;font-size:10px;color:var(--dim);margin-left:auto">'+parts.length+' / '+STATE.assayDB.length+' parts</span>'
+    +'<button class="btn btn-s btn-sm" onclick="openImportModal()" title="Import CSV">\u21e1 Import</button>'
+    +'<button class="btn btn-s btn-sm" onclick="exportAssayCSV()" title="Export CSV">\u21e3 Export</button>'
+    +'<button class="btn btn-gold btn-sm" onclick="openAddPartModal()">+ Add Part</button>'
+    +'</div>'
+    +'<div style="background:var(--s2);border:1px solid var(--b1);border-radius:8px;padding:10px 16px;display:flex;gap:16px;align-items:center;flex-wrap:wrap">'
+    +'<span style="font-family:\'DM Mono\',monospace;font-size:8px;color:var(--dim);text-transform:uppercase;letter-spacing:1.5px">Recovery Rates:</span>'
+    +rrHtml
+    +'<span style="font-family:\'DM Mono\',monospace;font-size:8px;color:var(--dim);text-transform:uppercase;letter-spacing:1.5px;margin-left:auto">Buy Band:</span>'
+    +'<input type="number" value="'+Math.round(STATE.buyBand.min*100)+'" style="width:46px;background:var(--s3);border:1px solid var(--b2);border-radius:4px;padding:3px 6px;color:var(--gold);font-family:\'DM Mono\',monospace;font-size:11px;text-align:center;outline:none" oninput="STATE.buyBand.min=this.value/100;renderView(\'assay\')">'
+    +'<span style="font-family:\'DM Mono\',monospace;font-size:10px;color:var(--dim)">\u2013</span>'
+    +'<input type="number" value="'+Math.round(STATE.buyBand.max*100)+'" style="width:46px;background:var(--s3);border:1px solid var(--b2);border-radius:4px;padding:3px 6px;color:var(--gold);font-family:\'DM Mono\',monospace;font-size:11px;text-align:center;outline:none" oninput="STATE.buyBand.max=this.value/100;renderView(\'assay\')">'
+    +'<span style="font-family:\'DM Mono\',monospace;font-size:9px;color:var(--dim)">% of recovery</span>'
+    +'</div>'
+    +'<div class="panel"><table class="tbl"><thead><tr><th>Part No.</th><th>Vehicle</th><th>Type</th><th>Pt</th><th>Pd</th><th>Rh</th><th>Ce</th><th>Est. Net</th><th>Buy Min</th><th>Buy Max</th><th>Conf.</th></tr></thead><tbody>'+rows+'</tbody></table></div>'
+    +'</div>';
+}
+
+function showPartDetail(id) {
+  var p = STATE.assayDB.find(function(x){ return x.id === id; });
+  if (!p) return;
+  showToast(p.vehicle+' ('+p.part+')' + (p.notes ? ' \u2014 '+p.notes : ''), 'var(--gold)', '\u2666');
+}
+
+/* ---- CSV IMPORT ENGINE ---- */
+var _pendingImportRows = [];
+
+function mapColumnName(raw) {
+  var s = raw.trim().toLowerCase().replace(/[^a-z0-9]/g, '');
+  var m = {partnumber:'part',partno:'part',part:'part',partnum:'part',pn:'part',partnr:'part',
+    vehicle:'vehicle',vehicledesc:'vehicle',description:'vehicle',model:'vehicle',vehicledescription:'vehicle',
+    make:'make',manufacturer:'make',brand:'make',oem:'make',
+    type:'type',unittype:'type',catdpf:'type',category:'type',
+    fuel:'fuel',fueltype:'fuel',
+    euro:'euro',emissionstandard:'euro',eurostandard:'euro',
+    ptg:'pt_g',pt:'pt_g',platinum:'pt_g',platinumg:'pt_g',
+    pdg:'pd_g',pd:'pd_g',palladium:'pd_g',palladiumg:'pd_g',
+    rhg:'rh_g',rh:'rh_g',rhodium:'rh_g',rhodiumg:'rh_g',
+    cekg:'ce_kg',ce:'ce_kg',cerium:'ce_kg',ceriumkg:'ce_kg',
+    weightkg:'weight',weight:'weight',wt:'weight',mass:'weight',
+    confidence:'conf',conf:'conf',quality:'conf',
+    notes:'notes',note:'notes',comments:'notes',comment:'notes',info:'notes',
+    stamps:'stamps',stamp:'stamps',markings:'stamps',marking:'stamps'};
+  return m[s] || null;
+}
+
+function parseCSV(text) {
+  var lines=[],cur=[],fld='',inQ=false;
+  for(var i=0;i<text.length;i++){
+    var c=text[i];
+    if(inQ){if(c==='"'){if(i+1<text.length&&text[i+1]==='"'){fld+='"';i++}else inQ=false}else fld+=c}
+    else{if(c==='"')inQ=true;else if(c===','||c==='\t'){cur.push(fld.trim());fld=''}
+    else if(c==='\n'||c==='\r'){if(c==='\r'&&i+1<text.length&&text[i+1]==='\n')i++;cur.push(fld.trim());if(cur.some(function(f){return f!==''}))lines.push(cur);cur=[];fld=''}
+    else fld+=c}
+  }
+  cur.push(fld.trim());if(cur.some(function(f){return f!==''}))lines.push(cur);
+  return lines;
+}
+
+function handleImportFile(file) {
+  if(!file) return;
+  var r=new FileReader();
+  r.onload=function(e){processImportText(e.target.result,file.name)};
+  r.readAsText(file);
+}
+
+function processImportText(text, fname) {
+  var lines=parseCSV(text);
+  if(lines.length<2){showToast('File has no data rows','var(--red)','\u26a0');return}
+  var headers=lines[0], colMap={}, unmapped=[];
+  headers.forEach(function(h,i){var m=mapColumnName(h);if(m)colMap[i]=m;else unmapped.push(h)});
+  var mapped=[];for(var k in colMap)mapped.push(colMap[k]);
+  if(mapped.indexOf('part')<0){showToast('Missing required: Part_Number','var(--red)','\u26a0');return}
+  if(mapped.indexOf('vehicle')<0){showToast('Missing required: Vehicle','var(--red)','\u26a0');return}
+
+  var rows=[],errs=0,maxId=STATE.assayDB.reduce(function(mx,p){return Math.max(mx,p.id)},0);
+  for(var r=1;r<lines.length;r++){
+    var row=lines[r];
+    var rec={id:maxId+r,pt_g:0,pd_g:0,rh_g:0,ce_kg:0,weight:0,conf:'med',notes:'',make:'',type:'CAT'};
+    for(var ci in colMap){
+      var fld=colMap[ci],val=(row[ci]||'').trim();if(!val)continue;
+      if(fld==='pt_g'||fld==='pd_g'||fld==='rh_g'||fld==='ce_kg'||fld==='weight')rec[fld]=parseFloat(val)||0;
+      else if(fld==='conf'){var lv=val.toLowerCase();rec.conf=(lv==='high'||lv==='h')?'high':(lv==='low'||lv==='l')?'low':'med'}
+      else if(fld==='type'){var tv=val.toUpperCase();rec.type=(tv==='DPF'||tv==='FAP')?'DPF':'CAT'}
+      else rec[fld]=val;
+    }
+    if(!rec.part){errs++;continue}
+    if(!rec.vehicle)rec.vehicle=rec.part;
+    rows.push(rec);
+  }
+  _pendingImportRows=rows;
+
+  document.getElementById('import-drop-zone').style.display='none';
+  document.getElementById('import-preview-area').style.display='block';
+
+  var mh='<div style="font-family:\'DM Mono\',monospace;font-size:9px;color:var(--dim);text-transform:uppercase;letter-spacing:1px;margin-bottom:6px">Column Mapping</div><div class="col-map-grid">';
+  for(var ci2 in colMap)mh+='<div class="col-map-item"><span style="color:var(--mid)">'+headers[ci2]+'</span><span style="color:var(--gold);margin:0 4px">\u2192</span><span style="color:var(--grn)">'+colMap[ci2]+'</span></div>';
+  unmapped.forEach(function(u){mh+='<div class="col-map-item"><span style="color:var(--mid)">'+u+'</span><span style="color:var(--gold);margin:0 4px">\u2192</span><span style="color:var(--dim)">skipped</span></div>'});
+  mh+='</div>';
+  document.getElementById('import-col-map').innerHTML=mh;
+
+  var cats=rows.filter(function(r2){return r2.type==='CAT'}).length;
+  var withPGM=rows.filter(function(r2){return r2.pt_g>0||r2.pd_g>0||r2.rh_g>0}).length;
+  var ep={};STATE.assayDB.forEach(function(p){ep[p.part.toLowerCase()]=true});
+  var dupes=rows.filter(function(r2){return ep[r2.part.toLowerCase()]}).length;
+
+  document.getElementById('import-stats').innerHTML='<div class="import-stats">'
+    +'<div class="import-stat"><span style="color:var(--grn)">'+rows.length+'</span> parts</div>'
+    +'<div class="import-stat"><span style="color:var(--gold)">'+cats+'</span> CAT / <span style="color:var(--pd)">'+(rows.length-cats)+'</span> DPF</div>'
+    +'<div class="import-stat"><span style="color:var(--pt)">'+withPGM+'</span> with PGM</div>'
+    +(dupes?'<div class="import-stat"><span style="color:var(--amb)">'+dupes+'</span> dupes</div>':'')
+    +(errs?'<div class="import-stat"><span style="color:var(--red)">'+errs+'</span> skipped</div>':'')
+    +'</div>';
+
+  var prev=rows.slice(0,15);
+  var th='<table><thead><tr><th>Part</th><th>Vehicle</th><th>Make</th><th>Type</th><th>Pt</th><th>Pd</th><th>Rh</th><th>Ce</th><th>Conf</th></tr></thead><tbody>';
+  prev.forEach(function(r2){th+='<tr><td style="color:var(--gold)">'+r2.part+'</td><td style="color:var(--txt)">'+r2.vehicle+'</td><td>'+(r2.make||'\u2014')+'</td><td><span class="tag '+(r2.type==='CAT'?'t-cat':'t-dpf')+'">'+r2.type+'</span></td><td style="color:var(--pt)">'+r2.pt_g+'</td><td style="color:var(--pd)">'+r2.pd_g+'</td><td style="color:var(--rh)">'+r2.rh_g+'</td><td style="color:var(--ce)">'+r2.ce_kg+'</td><td>'+r2.conf+'</td></tr>'});
+  if(rows.length>15)th+='<tr><td colspan="9" style="text-align:center;color:var(--dim);font-style:italic">... and '+(rows.length-15)+' more</td></tr>';
+  th+='</tbody></table>';
+  document.getElementById('import-preview-table').innerHTML=th;
+  document.getElementById('btn-do-import').style.display='inline-flex';
+  document.getElementById('btn-do-import').textContent='Import '+rows.length+' Parts';
+}
+
+function executeImport() {
+  if(!_pendingImportRows.length) return;
+  var ow=document.getElementById('import-overwrite').checked;
+  var added=0,updated=0,skipped=0;
+  var maxId=STATE.assayDB.reduce(function(mx,p){return Math.max(mx,p.id)},0);
+  _pendingImportRows.forEach(function(row){
+    var ei=-1;
+    for(var i=0;i<STATE.assayDB.length;i++){if(STATE.assayDB[i].part.toLowerCase()===row.part.toLowerCase()){ei=i;break}}
+    if(ei>=0){if(ow){row.id=STATE.assayDB[ei].id;STATE.assayDB[ei]=row;updated++}else skipped++}
+    else{maxId++;row.id=maxId;STATE.assayDB.push(row);added++}
+  });
+  saveAssayDB();
+  closeModal('modal-import-assay');resetImport();
+  var msg=added+' added';if(updated)msg+=', '+updated+' updated';if(skipped)msg+=', '+skipped+' dupes skipped';
+  showToast('Import: '+msg,'var(--grn)','\u2913');
+  renderView('assay');
+}
+
+function resetImport() {
+  _pendingImportRows=[];
+  var dz=document.getElementById('import-drop-zone');if(dz)dz.style.display='';
+  var pa=document.getElementById('import-preview-area');if(pa)pa.style.display='none';
+  var fi=document.getElementById('import-file-input');if(fi)fi.value='';
+  var b=document.getElementById('btn-do-import');if(b)b.style.display='none';
+}
+
+function openImportModal() {
+  resetImport();
+  document.getElementById('modal-import-assay').classList.add('open');
+  var dz=document.getElementById('import-drop-zone');
+  dz.ondragover=function(e){e.preventDefault();dz.style.borderColor='var(--gold3)';dz.style.background='var(--s3)'};
+  dz.ondragleave=function(){dz.style.borderColor='var(--b2)';dz.style.background='var(--s2)'};
+  dz.ondrop=function(e){e.preventDefault();dz.style.borderColor='var(--b2)';dz.style.background='var(--s2)';var f=e.dataTransfer.files[0];if(f)handleImportFile(f)};
+}
+
+/* ---- ADD SINGLE PART ---- */
+function openAddPartModal() {
+  ['ap-part','ap-vehicle','ap-notes'].forEach(function(id){var e=document.getElementById(id);if(e)e.value=''});
+  ['ap-pt','ap-pd','ap-rh','ap-ce','ap-weight'].forEach(function(id){var e=document.getElementById(id);if(e)e.value='0'});
+  ['ap-make','ap-fuel','ap-type','ap-conf'].forEach(function(id){var e=document.getElementById(id);if(e)e.selectedIndex=0});
+  document.getElementById('modal-add-part').classList.add('open');
+}
+
+function saveNewAssayPart() {
+  var part=(document.getElementById('ap-part').value||'').trim();
+  var vehicle=(document.getElementById('ap-vehicle').value||'').trim();
+  if(!part){showToast('Part number required','var(--amb)','\u26a0');return}
+  if(!vehicle){showToast('Vehicle required','var(--amb)','\u26a0');return}
+  if(STATE.assayDB.some(function(p){return p.part.toLowerCase()===part.toLowerCase()})){showToast(part+' already exists','var(--amb)','\u26a0');return}
+  var maxId=STATE.assayDB.reduce(function(mx,p){return Math.max(mx,p.id)},0);
+  STATE.assayDB.push({
+    id:maxId+1, part:part, vehicle:vehicle,
+    make:document.getElementById('ap-make').value||'',
+    type:document.getElementById('ap-type').value||'CAT',
+    pt_g:parseFloat(document.getElementById('ap-pt').value)||0,
+    pd_g:parseFloat(document.getElementById('ap-pd').value)||0,
+    rh_g:parseFloat(document.getElementById('ap-rh').value)||0,
+    ce_kg:parseFloat(document.getElementById('ap-ce').value)||0,
+    weight:parseFloat(document.getElementById('ap-weight').value)||0,
+    conf:document.getElementById('ap-conf').value||'med',
+    notes:(document.getElementById('ap-notes').value||'').trim()
+  });
+  saveAssayDB();
+  closeModal('modal-add-part');
+  showToast(part+' added \u2014 '+vehicle,'var(--grn)','\u2666');
+  renderView('assay');
+}
+
+/* ---- EXPORT CSV ---- */
+function exportAssayCSV() {
+  var h=['Part_Number','Vehicle','Make','Type','Pt_g','Pd_g','Rh_g','Ce_kg','Weight_kg','Est_Net_Value','Buy_Min','Buy_Max','Confidence','Notes'];
+  var rows=[h.join(',')];
+  STATE.assayDB.forEach(function(p){
+    var net=calcNetRecovery(p),band=calcBuyBand(net);
+    rows.push([csvE(p.part),csvE(p.vehicle),csvE(p.make||''),p.type,p.pt_g,p.pd_g,p.rh_g,p.ce_kg,p.weight||0,net.toFixed(2),band.min,band.max,p.conf||'med',csvE(p.notes||'')].join(','));
+  });
+  var blob=new Blob([rows.join('\n')],{type:'text/csv'});
+  var url=URL.createObjectURL(blob);
+  var a=document.createElement('a');a.href=url;a.download='cattrack-assay-database.csv';a.click();
+  URL.revokeObjectURL(url);
+  showToast('Exported '+STATE.assayDB.length+' parts','var(--grn)','\u2913');
+}
+function csvE(s){if(!s)return'';return(s.indexOf(',')>=0||s.indexOf('"')>=0||s.indexOf('\n')>=0)?'"'+s.replace(/"/g,'""')+'"':s}
+
+/* ════════════════════════════════════════════
+   COMMODITY DESK
+════════════════════════════════════════════ */
+function getBuySignals() {
+  const p = STATE.prices;
+  const signals = [];
+  // Cheap Pt signal
+  if (p.pt.usd < 1000) {
+    signals.push({ icon:'\u25CF', title:'Platinum below $1,000', sub:'Current: $' + Math.round(p.pt.usd) + '/oz \u2014 buy band favourable', action:'BUY', color:'var(--grn)' });
+  }
+  // Rh spike
+  if (p.rh.usd > 5000) {
+    signals.push({ icon:'\u25CF', title:'Rhodium above $5,000', sub:'Consider dispatching Rh-heavy lots now', action:'DISPATCH', color:'var(--amb)' });
+  }
+  // Pd dip
+  const pdChg = chgPct(p.pd.usd, p.pd.prev);
+  if (pdChg < -1) {
+    signals.push({ icon:'\u25CF', title:'Palladium dipping ' + pdChg.toFixed(1) + '%', sub:'Short-term buy opportunity', action:'WATCH', color:'var(--gold)' });
+  }
+  // Stale inventory
+  const stale = STATE.inventory.filter(u => u.daysIn > 21 && !u.lot);
+  if (stale.length) {
+    signals.push({ icon:'\u231B', title:stale.length + ' units aged 21+ days', sub:'Consider lotting stale stock to reduce exposure', action:'LOT', color:'var(--amb)' });
+  }
+  // FX
+  if (p.fx < 1.25) {
+    signals.push({ icon:'\u00A3', title:'GBP strengthening (FX ' + p.fx.toFixed(4) + ')', sub:'GBP values rising \u2014 good time to sell', action:'SELL', color:'var(--grn)' });
+  }
+  if (!signals.length) {
+    signals.push({ icon:'\u2714', title:'Markets stable', sub:'No immediate signals', action:'HOLD', color:'var(--mid)' });
+  }
+  return signals;
+}
+
+function renderCommodity() {
+  const p = STATE.prices;
+  const metals = [
+    { key:'pt', name:'Platinum', color:'var(--pt)' },
+    { key:'pd', name:'Palladium', color:'var(--pd)' },
+    { key:'rh', name:'Rhodium',   color:'var(--rh)' },
+    { key:'ce', name:'Cerium',    color:'var(--ce)' },
+  ];
+  const isLive = STATE.api.live;
+  const hasKey = !!STATE.api.key;
+  const lastTs = STATE.api.lastUpdate ? STATE.api.lastUpdate.toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'}) + ' ' + STATE.api.lastUpdate.toLocaleDateString('en-GB',{day:'2-digit',month:'short'}) : 'never';
+  const statusDot = isLive ? 'var(--grn)' : hasKey ? 'var(--amb)' : 'var(--ce)';
+  const statusText = isLive ? 'Live \u2014 auto-refreshing every ' + STATE.api.interval + ' min' : hasKey ? 'Cached \u2014 click Connect to go live' : 'Demo \u2014 add key to go live';
+
+  return `
+  <div style="display:flex;flex-direction:column;gap:16px">
+    <!-- API control bar -->
+    <div style="background:var(--s2);border:1px solid var(--b1);border-radius:8px;padding:12px 16px;display:flex;gap:12px;align-items:center;flex-wrap:wrap">
+      <span style="font-family:'DM Mono',monospace;font-size:9px;color:var(--dim);text-transform:uppercase;letter-spacing:1.5px;flex-shrink:0">Live Feed</span>
+      <input id="api-key-field" type="password" class="form-inp" style="flex:1;max-width:380px;padding:7px 12px;font-family:'DM Mono',monospace;font-size:11px" placeholder="metals-api.com key (free 100 req/month)" value="${STATE.api.key}">
+      <select id="refresh-interval" class="form-sel" style="width:auto;padding:7px 10px;font-family:'DM Mono',monospace;font-size:11px" onchange="STATE.api.interval=parseInt(this.value);localStorage.setItem('ct_interval',this.value)">
+        <option value="60" ${STATE.api.interval===60?'selected':''}>Every 60 min</option>
+        <option value="15" ${STATE.api.interval===15?'selected':''}>Every 15 min</option>
+        <option value="5" ${STATE.api.interval===5?'selected':''}>Every 5 min</option>
+      </select>
+      ${isLive
+        ? '<button class="btn btn-sm" style="background:var(--s3);color:var(--red);border:1px solid var(--red)" onclick="disconnectLiveFeed()">\u25A0 Disconnect</button>'
+        : '<button class="btn btn-gold btn-sm" onclick="connectLiveFeed()">\u25B6 Connect</button>'
+      }
+    </div>
+
+    <!-- Status bar -->
+    <div style="display:flex;align-items:center;gap:10px;padding:6px 16px;background:var(--s1);border:1px solid var(--b1);border-radius:6px">
+      <span style="font-size:10px;color:${statusDot}">\u25CF</span>
+      <span style="font-family:'DM Mono',monospace;font-size:10px;color:var(--mid)">${statusText}</span>
+      <span style="margin-left:auto;font-family:'DM Mono',monospace;font-size:9px;color:var(--dim)">Last update: ${lastTs}</span>
+      ${isLive ? '<button class="btn btn-sm" style="padding:2px 10px;font-size:9px;background:var(--s2);border:1px solid var(--b1);color:var(--gold)" onclick="fetchLivePrices(STATE.api.key)">\u21BB Refresh now</button>' : ''}
+    </div>
+
+    <!-- Metal cards -->
+    <div class="g4">
+      ${metals.map(m => {
+        const mp = p[m.key];
+        const chg = chgPct(mp.usd, mp.prev);
+        const chgCls = chg >= 0 ? 'up' : 'dn';
+        const chgSign = chg >= 0 ? '\u25B2' : '\u25BC';
+        const perUnit = m.key === 'ce' ? '\u00A3' + (mp.usd/p.fx).toFixed(2) + '/kg' : '\u00A3' + (mp.usd/TROY/p.fx).toFixed(2) + '/g';
+        return '<div class="metal-card-sm">' +
+          '<div class="mcs-top" style="background:' + m.color + '"></div>' +
+          '<div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:10px">' +
+            '<div>' +
+              '<div style="font-family:Bebas Neue;font-size:28px;letter-spacing:2px;color:' + m.color + ';line-height:1">' + m.key.toUpperCase() + '</div>' +
+              '<div style="font-family:DM Mono,monospace;font-size:8px;color:var(--dim);margin-top:2px">' + m.name + '</div>' +
+            '</div>' +
+            '<div style="text-align:right">' +
+              '<div style="font-family:DM Mono,monospace;font-size:15px;color:' + m.color + ';font-weight:500">$' + mp.usd.toLocaleString('en',{minimumFractionDigits:m.key==='ce'?2:0,maximumFractionDigits:m.key==='ce'?2:0}) + '</div>' +
+              '<div style="font-family:DM Mono,monospace;font-size:11px;color:var(--mid);margin-top:2px">\u2248 \u00A3' + (mp.usd/p.fx).toFixed(m.key==='ce'?2:0) + '</div>' +
+              '<div style="font-family:DM Mono,monospace;font-size:10px;margin-top:2px" class="' + chgCls + '">' + chgSign + ' ' + Math.abs(chg).toFixed(1) + '%</div>' +
+            '</div>' +
+          '</div>' +
+          '<div style="font-family:DM Mono,monospace;font-size:9px;color:var(--dim)">' + perUnit + ' \u00B7 GBP/USD ' + p.fx + '</div>' +
+        '</div>';
+      }).join('')}
+    </div>
+
+    <div class="g2">
+      <!-- Portfolio impact -->
+      <div class="panel">
+        <div class="ph"><span class="ph-title">Portfolio Sensitivity \u2014 \u00B110%</span></div>
+        <div class="pb">
+          ${['pt','pd','rh'].map(m => {
+            const val = STATE.inventory.reduce((s,u) => s + u[m+'_g'] * p[m].gbpPerG * STATE.recovery[m], 0);
+            const impact10 = val * 0.10;
+            return '<div style="display:flex;justify-content:space-between;align-items:center;padding:9px 0;border-bottom:1px solid var(--b1)">' +
+              '<span style="font-family:DM Mono,monospace;font-size:10px;color:var(--' + m + ')">' + m.toUpperCase() + ' \u00B110%</span>' +
+              '<span style="font-family:DM Mono,monospace;font-size:11px;color:var(--grn)">\u00B1' + fmtGBP(impact10) + '</span>' +
+            '</div>';
+          }).join('')}
+        </div>
+      </div>
+
+      <!-- Buy signals -->
+      <div class="panel">
+        <div class="ph"><span class="ph-title">Live Buy Signals</span></div>
+        <div style="padding:12px 16px;display:flex;flex-direction:column;gap:6px">
+          ${getBuySignals().map(s =>
+          '<div style="display:flex;align-items:center;gap:8px;padding:9px 12px;background:var(--s2);border:1px solid var(--b1);border-radius:7px">' +
+            '<span style="font-size:16px">' + s.icon + '</span>' +
+            '<div style="flex:1">' +
+              '<div style="font-size:13px;font-weight:600;color:var(--txt)">' + s.title + '</div>' +
+              '<div style="font-family:DM Mono,monospace;font-size:9px;color:var(--mid);margin-top:2px">' + s.sub + '</div>' +
+            '</div>' +
+            '<span style="font-family:DM Mono,monospace;font-size:12px;font-weight:600;color:' + s.color + '">' + s.action + '</span>' +
+          '</div>').join('')}
+        </div>
+      </div>
+    </div>
+  </div>`;
+}
+
+function connectLiveFeed() {
+  const key = document.getElementById('api-key-field')?.value?.trim();
+  if (!key) { showToast('Enter your API key first — free at metals-api.com', 'var(--amb)', "\u26A0"); return; }
+  STATE.api.key = key;
+  localStorage.setItem('ct_key', key);
+  // Save interval choice
+  const selEl = document.getElementById('refresh-interval');
+  if (selEl) {
+    STATE.api.interval = parseInt(selEl.value) || 60;
+    localStorage.setItem('ct_interval', STATE.api.interval);
+  }
+  showToast('Connecting to live feed...', 'var(--gold)', "\u25CE");
+  fetchLivePrices(key);
+  startAutoRefresh();
+}
+
+function startAutoRefresh() {
+  if (STATE.api.timerId) clearInterval(STATE.api.timerId);
+  const mins = STATE.api.interval || 60;
+  STATE.api.timerId = setInterval(() => {
+    if (STATE.api.key) fetchLivePrices(STATE.api.key);
+  }, mins * 60 * 1000);
+  console.log('Auto-refresh set to every ' + mins + ' min');
+}
+
+function disconnectLiveFeed() {
+  if (STATE.api.timerId) { clearInterval(STATE.api.timerId); STATE.api.timerId = null; }
+  STATE.api.live = false;
+  updateSidebarTicker();
+  if (STATE.ui.currentView === 'commodity') renderView('commodity');
+  showToast('Disconnected from live feed', 'var(--amb)', "\u25CB");
+}
+
+async function fetchLivePrices(key) {
+  try {
+    const url = 'https://metals-api.com/api/latest?access_key=' + key + '&base=USD&symbols=XPT,XPD,XRH,GBP';
+    const res = await fetch(url);
+    const data = await res.json();
+    if (!data.success) {
+      const info = data.error?.info || data.error?.type || 'API error';
+      throw new Error(info);
+    }
+    const r = data.rates;
+    if (r.XPT) { STATE.prices.pt.prev = STATE.prices.pt.usd; STATE.prices.pt.usd = 1/r.XPT; }
+    if (r.XPD) { STATE.prices.pd.prev = STATE.prices.pd.usd; STATE.prices.pd.usd = 1/r.XPD; }
+    if (r.XRH) { STATE.prices.rh.prev = STATE.prices.rh.usd; STATE.prices.rh.usd = 1/r.XRH; }
+    if (r.GBP) STATE.prices.fx = 1/r.GBP;
+    recalcPricesGBP();
+    STATE.api.live = true;
+    STATE.api.lastUpdate = new Date();
+    cachePrices();
+    updateSidebarTicker();
+    renderView(STATE.ui.currentView);
+    showToast('Live prices updated — Metals-API', 'var(--grn)', "\u25CE");
+  } catch(e) {
+    STATE.api.live = false;
+    updateSidebarTicker();
+    showToast('API error: ' + e.message, 'var(--red)', "\u26A0");
+  }
+}
+
+/* ════════════════════════════════════════════
+   SETTLEMENT
+════════════════════════════════════════════ */
+function renderSettlement() {
+  const settled = STATE.lots.filter(l => l.settledValue);
+  const pending = STATE.lots.filter(l => l.status === 'dispatched' && !l.settledValue);
+  const avgAcc  = settled.length ? settled.reduce((s,l) => s + l.settledValue/l.estValue, 0)/settled.length*100 : 0;
+
+  return `
+  <div style="display:flex;flex-direction:column;gap:16px">
+    <div class="g3">
+      <div class="kpi-card kpi-grn">
+        <div class="kpi-val" style="color:var(--grn)">${fmt(avgAcc,1)}%</div>
+        <div class="kpi-lbl">Est. Accuracy</div>
+        <div class="kpi-sub">${settled.length} lots settled</div>
+      </div>
+      <div class="kpi-card kpi-gold">
+        <div class="kpi-val" style="color:var(--gold)">${fmtGBP(settled.reduce((s,l)=>s+l.settledValue,0))}</div>
+        <div class="kpi-lbl">Total Received</div>
+        <div class="kpi-sub">All settled lots</div>
+      </div>
+      <div class="kpi-card kpi-pt">
+        <div class="kpi-val" style="color:var(--pt)">${pending.length}</div>
+        <div class="kpi-lbl">Awaiting Settlement</div>
+        <div class="kpi-sub">Dispatched but not settled</div>
+      </div>
+    </div>
+
+    <div class="g2">
+      <div class="panel">
+        <div class="ph"><span class="ph-title">Settled Lots</span></div>
+        <table class="tbl">
+          <thead><tr><th>Lot</th><th>Refiner</th><th>Estimated</th><th>Settled</th><th>Accuracy</th><th>Variance</th></tr></thead>
+          <tbody>
+            ${settled.map(l => {
+              const acc = l.settledValue/l.estValue*100;
+              const variance = l.settledValue - l.estValue;
+              return `<tr>
+                <td style="font-family:'DM Mono',monospace;color:var(--gold)">${l.id}</td>
+                <td style="font-size:12px;color:var(--mid)">${l.refiner}</td>
+                <td class="mono">${fmtGBP(l.estValue)}</td>
+                <td class="mono" style="color:var(--grn)">${fmtGBP(l.settledValue)}</td>
+                <td class="mono ${acc>=99?'up':acc>=97?'nt':'dn'}">${fmt(acc,1)}%</td>
+                <td class="mono ${variance>=0?'up':'dn'}">${variance>=0?'+':''}£${Math.round(variance)}</td>
+              </tr>`;
+            }).join('')}
+          </tbody>
+        </table>
+      </div>
+
+      <div class="panel">
+        <div class="ph"><span class="ph-title">Enter Settlement</span></div>
+        <div class="pb">
+          <div class="form-row"><label class="form-lbl">Lot</label>
+            <select class="form-sel" id="settle-lot">
+              ${[...STATE.lots].filter(l=>l.status==='dispatched'||l.status==='building').map(l=>`<option value="${l.id}">${l.id} — ${l.refiner}</option>`).join('')}
+            </select>
+          </div>
+          <div class="form-row"><label class="form-lbl">Settlement Amount (£)</label><input class="form-inp" id="settle-amount" type="number" placeholder="e.g. 5188.00"></div>
+          <div class="form-row"><label class="form-lbl">Settlement Date</label><input class="form-inp" id="settle-date" type="date"></div>
+          <div class="form-row"><label class="form-lbl">Notes</label><input class="form-inp" id="settle-notes" placeholder="Refiner ref, assay notes..."></div>
+          <button class="btn btn-gold" style="width:100%;justify-content:center;margin-top:4px" onclick="recordSettlement()">Record Settlement</button>
+        </div>
+      </div>
+    </div>
+  </div>`;
+}
+
+function recordSettlement() {
+  const lotId = document.getElementById('settle-lot')?.value;
+  const amount = parseFloat(document.getElementById('settle-amount')?.value || 0);
+  if (!lotId || !amount) { showToast('Select a lot and enter the settlement amount', 'var(--amb)', '⚠'); return; }
+  const lot = STATE.lots.find(l => l.id === lotId);
+  if (!lot) return;
+  lot.settledValue = amount;
+  lot.status = 'settled';
+  const acc = (amount / (lot.estValue || amount)) * 100;
+  showToast(lotId + ' settled — ' + fmtGBP(amount) + ' received (' + fmt(acc,1) + '% accuracy)', 'var(--grn)', '✦');
+  renderView('settlement');
+}
+
+/* ════════════════════════════════════════════
+   SUPPLIERS
+════════════════════════════════════════════ */
+function renderSuppliers() {
+  return `
+  <div style="display:flex;flex-direction:column;gap:16px">
+    <div class="g3">
+      <div class="kpi-card kpi-gold">
+        <div class="kpi-val" style="color:var(--gold)">${STATE.suppliers.length}</div>
+        <div class="kpi-lbl">Active Suppliers</div>
+        <div class="kpi-sub">${STATE.suppliers.filter(s=>s.active).length} active</div>
+      </div>
+      <div class="kpi-card kpi-grn">
+        <div class="kpi-val" style="color:var(--grn)">${STATE.suppliers.reduce((s,x)=>s+x.units,0)}</div>
+        <div class="kpi-lbl">Total Units Sourced</div>
+      </div>
+      <div class="kpi-card kpi-pt">
+        <div class="kpi-val" style="color:var(--pt)">£${fmt(STATE.suppliers.reduce((s,x)=>s+x.avgBought,0)/STATE.suppliers.length,2)}</div>
+        <div class="kpi-lbl">Avg Buy Price</div>
+      </div>
+    </div>
+    <div class="panel">
+      <table class="tbl">
+        <thead><tr><th>ID</th><th>Supplier</th><th>Type</th><th>Units Sourced</th><th>Avg Buy Price</th><th>Last Purchase</th><th>Status</th></tr></thead>
+        <tbody>
+          ${STATE.suppliers.map(s => `<tr>
+            <td class="mono" style="color:var(--gold)">${s.id}</td>
+            <td><div style="font-size:13px;font-weight:500;color:var(--txt)">${s.name}</div></td>
+            <td><span class="tag t-${s.type.toLowerCase().replace(' ','-').replace('-','')}">${s.type}</span></td>
+            <td class="mono" style="color:var(--txt)">${s.units}</td>
+            <td class="mono" style="color:var(--gold)">£${s.avgBought.toFixed(2)}</td>
+            <td class="mono" style="color:var(--mid)">${s.lastDate}</td>
+            <td><span class="tag" style="background:${s.active?'rgba(76,186,136,.1)':'rgba(224,88,88,.1)'};color:${s.active?'var(--grn)':'var(--red)'};border:none">${s.active?'Active':'Inactive'}</span></td>
+          </tr>`).join('')}
+        </tbody>
+      </table>
+    </div>
+  </div>`;
+}
+
+/* ════════════════════════════════════════════
+   UTILITIES
+════════════════════════════════════════════ */
+function closeModal(id) { document.getElementById(id).classList.remove('open'); }
+
+function updateNavBadges() {
+  const atRisk = STATE.inventory.filter(u => u.daysIn > 21).length;
+  const invBadge = document.getElementById('badge-inv');
+  if (invBadge) { invBadge.textContent = atRisk; invBadge.style.display = atRisk > 0 ? 'inline' : 'none'; }
+}
+
+function showToast(msg, borderColor='var(--grn)', icon='✓') {
+  const t = document.getElementById('toast');
+  document.getElementById('toast-msg').textContent = msg;
+  document.getElementById('toast-ic').textContent = icon;
+  t.style.borderColor = borderColor;
+  t.classList.add('show');
+  clearTimeout(t._timer);
+  t._timer = setTimeout(() => t.classList.remove('show'), 4000);
+}
+
+/* ════════════════════════════════════════════
+   INIT
+════════════════════════════════════════════ */
+// Initial render
+if (!localStorage.getItem(ASSAY_STORAGE_KEY)) saveAssayDB();
+recalcPricesGBP();
+updateSidebarTicker();
+renderView('dashboard');
+updateNavBadges();
+
+// Auto-connect to live feed if key exists
+(function autoConnect() {
+  const key = STATE.api.key;
+  if (key) {
+    console.log('API key found, auto-connecting...');
+    setTimeout(() => {
+      fetchLivePrices(key);
+      startAutoRefresh();
+    }, 800);
+  }
+})();
+
+// Subtle demo price drift every 40s (only when NOT live)
+setInterval(() => {
+  if (!STATE.api.live) {
+    ['pt','pd','rh'].forEach(m => {
+      const drift = (Math.random()-0.5)*0.004;
+      STATE.prices[m].prev = STATE.prices[m].usd;
+      STATE.prices[m].usd = parseFloat((STATE.prices[m].usd*(1+drift)).toFixed(2));
+    });
+    recalcPricesGBP();
+    updateSidebarTicker();
+    if (STATE.ui.currentView === 'commodity') renderView('commodity');
+  }
+}, 40000);
+
+// Close modals on overlay click
+document.querySelectorAll('.modal-bg').forEach(bg => {
+  bg.addEventListener('click', e => { if(e.target===bg) bg.classList.remove('open'); });
+});
+</script>
+</body>
+</html>
